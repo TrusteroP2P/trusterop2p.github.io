@@ -1,0 +1,26 @@
+{
+	"author": "Trustero dev",
+	"name": "Trustero",
+	"short_name": "Trustero",
+	"description": "Serverless chat application",
+	"orientation": "portrait",
+	"start_url": "/trustero/",
+	"scope": "/trustero/",
+	"display": "fullscreen",
+    "background_color": "#808080",
+    "theme_color": "#000000",
+	"icons": [
+		{
+			"src": "logo.png",
+			"sizes": "48x48 72x72 96x96 128x128 192x192 256x256 512x512",
+			"type": "image/png"
+		}
+	],
+	"manifest_version": 2,
+	"version": "0.1",
+	"applications": {
+		"gecko": {
+			"id": "addon@example.com"
+		}
+	}
+}
