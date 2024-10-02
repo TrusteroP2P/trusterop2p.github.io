@@ -4,8 +4,8 @@
 	"short_name": "Trustero",
 	"description": "Serverless chat application",
 	"orientation": "portrait",
-	"start_url": "/trustero/",
-	"scope": "/trustero/",
+	"start_url": "/",
+	"scope": "/",
 	"display": "fullscreen",
     "background_color": "#808080",
     "theme_color": "#000000",
@@ -16,7 +16,7 @@
 			"type": "image/png"
 		}
 	],
-	"manifest_version": 2,
+	"manifest_version": 1,
 	"version": "0.1",
 	"applications": {
 		"gecko": {
