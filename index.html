@@ -1838,7 +1838,7 @@ var RTCConfiguration = {
       if (isAtTopOfMessages()) {
         await populateMessages(visiblemessages);
       }
-    });    
+    });
 
     async function joinThis(config, myroom2) {
         if(room[myroom2]) {
@@ -1850,7 +1850,14 @@ var RTCConfiguration = {
         room[myroom2].onPeerJoin(peerId => notify(`${peerId} joined`,myroom2));
         room[myroom2].onPeerLeave(peerId => notify(`${peerId} left`,myroom2));
         ;[sendMessage[myroom2], getMessage] = room[myroom2].makeAction('message');
-        getMessage((message) => showMessage(message, myroom2));
+        getMessage(createMessageHandler(myroom2));
+    }
+
+    function createMessageHandler(room7) {
+        return function(message) {
+            //console.log('Message received in room:', room7);
+            showMessage(message, room7);
+        };
     }
 
     async function removeThis(theroom) {
