@@ -287,8 +287,8 @@ content="Serverless, decentralized and encrypted P2P chat based on Trystero"
     </button>
     <span id="identicon" style="cursor: pointer;"></span>
   </div>
-  <div id="messages" class="scrollable" style="background-color: #181818; border-radius: 5px; padding: 10px; width: 95%; height: calc(100vh - 100px); overflow-y: auto;">
-    </div>
+  <div id="messages" class="scrollable" style="background-color: #181818; border-radius: 5px; padding: 10px; width: 95%; height: calc(100vh - 100px); margin-top: 70px; overflow-y: auto;">
+  </div>
 
   <div style="background-color: #282828; border-radius: 7px; padding: 10px; width: 95%; height: 50px; margin-bottom: 10px; display: flex; align-items: center;">
     <button id="attach-image" class="attach-image-button" style="background-color: transparent; border: none; color: white; font-family: 'Gilroy', sans-serif; font-size: 18px; margin-right: 10px; cursor: pointer;">📎
@@ -629,7 +629,7 @@ content="Serverless, decentralized and encrypted P2P chat based on Trystero"
             centerPopup();
         }
     });
-    var connectStrategy = localStorage.getItem("connectStrategy") || "supabase";
+    var connectStrategy = localStorage.getItem("connectStrategy") || "torrent";
     const fireBaseURL = localStorage.getItem("fireBaseURL") || "none";
     const supaBaseURL = localStorage.getItem("supaBaseURL") || "https://cyiezatjolrcnizhzbxn.supabase.co";
     const supaBaseAPI = localStorage.getItem("supaBaseAPI") || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5aWV6YXRqb2xyY25pemh6YnhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjcxNzU5OTksImV4cCI6MjA0Mjc1MTk5OX0.flHjQCJMbLTlfcXiVNLQOs1JHUtd9GAa-njz7Dp6c3o";
