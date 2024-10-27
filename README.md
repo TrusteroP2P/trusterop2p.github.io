@@ -9,9 +9,15 @@ Users can run it on their local machine by opening multiple tabs and running "lo
 Then they type http://localhost:9000/index.htm
 
 The project currently shows the login procedure, room generation, message signing and encryption process.
-The current project status is shown as a demo. It has not been made into a fully fledged chat program.
-So there are various things that are not supported. Currently, only two-party chat and encryption is supported.
-However, the strategy for scaling the project is listed below.
+The current project status is shown as a demonstration. Connections are pretty robust once two peers find
+each other however they may have to switch connection strategies or set a free TURN server in their configuration.
+This application is made in a way so users can improvise when they struggle to connect for whatever reason.
+It's encouraged for collaborators to push improvements to the peer to peer libraries this application relies on.
+The internet is unfortunately set up in a way set up deliberately to prevent peer to peer applications on the web
+where the ISP or firewall will prevent direct connections. We believe this prevents the decentralization of
+pure front end peer to peer services. Therefore various strategies such as torrent trackers are a good
+way for peers to find each other and connect. This allows users to connect to each other without the use
+of servers other than a free TURN relay that they might set up between each other in some edge cases.
 
 How it works:
 1) Users generate a public key with a username and password. This is not saved anywhere, it's only used to save
@@ -25,13 +31,13 @@ How it works:
    them as base64 for example and proceed as normal.
 5) Since there is no servers the strategy for making sure messages arrive takes several steps. First they send
    the message only when the other peer is in the room. Then they wait some minutes for a confirmation. If they
-   don't get it, they resend the message. The other party will assume if the duplicate message is not sent then
-   the confirmation must have also been received.
+   don't get it, they resend the message.
 6) For chat rooms with multiple parties, you may want to limit the size due to browsers not being able to handle
    too many WebRTC peers multicasting at the same time. However I think groups can be quite large.
 7) Since it's probably best to not be in too many rooms at once, for people with large friends lists who they are
    not actively chatting with, they can cycle through their rooms in batches of 50-100 at a time. Then every few
    minutes they leave and join another batch. They can prioritize the users they more commonly chat with.
+   However currently the application is not tested or set up for large lists of contacts.
 
 RSA public key cryptography is used for asymmetric encryption with signing and verifying messages. This is 
 extremely useful in serverless architecture. This is done thanks to the Criptico library which is being used 
@@ -50,6 +56,9 @@ keystroke random data is used to make a very unpredictable hashed addition to th
 easily avoid almost all forms of cryptoanalysis. Additionally, it's also a good idea to encrypt the messages
 with AES by using an additional password that protects the room name and the message contents. Lastly some
 useful libraries are included but not used such as NACL which may also be good for future use.
+The signing and verifying of messages guarantees that no "man in the middle" could intercept communication.
+Also the padding protects against "chosen cipher" and other forms of cryptoanalysis respectively. Of course
+all of this is considering that the users of this application use secure and open source hardware and devices.
 
 This chat program is still somewhat complete and probably more secure than almost anything else out there.
 It supports encrypted webRTC phone calls, both RSA and AES encryption, messages in storage are encrypted,
