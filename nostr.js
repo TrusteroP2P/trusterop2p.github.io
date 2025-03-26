@@ -10,25 +10,29 @@ import {
   makeSocket,
   selfId,
   socketGetter,
+  strToNum,
   toHex,
   toJson
 } from './utils.js'
 
 const clients = {}
 const defaultRedundancy = 5
-const kind = 29333
 const tag = 'x'
 const eventMsgType = 'EVENT'
 const privateKey = isBrowser && schnorr.utils.randomPrivateKey()
 const publicKey = isBrowser && toHex(schnorr.getPublicKey(privateKey))
 const subIdToTopic = {}
 const msgHandlers = {}
+const kindCache = {}
 
 const now = () => Math.floor(Date.now() / 1000)
 
+const topicToKind = topic =>
+  (kindCache[topic] ??= strToNum(topic, 10_000) + 20_000)
+
 const createEvent = async (topic, content) => {
   const payload = {
-    kind,
+    kind: topicToKind(topic),
     content,
     pubkey: publicKey,
     created_at: now(),
@@ -69,7 +73,7 @@ const subscribe = (subId, topic) => {
     'REQ',
     subId,
     {
-      kinds: [kind],
+      kinds: [topicToKind(topic)],
       since: now(),
       ['#' + tag]: [topic]
     }
@@ -83,7 +87,7 @@ const unsubscribe = subId => {
 
 export const joinRoom = strategy({
   init: config =>
-    getRelays(config, defaultRelayUrls, defaultRedundancy).map(url => {
+    getRelays(config, defaultRelayUrls, defaultRedundancy, true).map(url => {
       const client = makeSocket(url, data => {
         const [msgType, subId, payload, relayMsg] = fromJson(data)
 
@@ -135,21 +139,29 @@ export const getRelaySockets = socketGetter(clients)
 export {selfId} from './utils.js'
 
 export const defaultRelayUrls = [
-  'relay.nostr.net',
-  'relay.snort.social',
-  'relay.piazza.today',
-  'relay.exit.pub',
-  'nostr.lu.ke',
-  'nostr.mom',
-  'relay.urbanzap.space',
+  'eu.purplerelay.com',
+  'ftp.halifax.rwth-aachen.de/nostr',
+  'longhorn.bgp.rodeo',
+  'multiplexer.huszonegy.world',
+  'nfdb.noswhere.com',
+  'nostr-verified.wellorder.net',
+  'nostr.cool110.xyz',
   'nostr.data.haus',
+  'nostr.grooveix.com',
+  'nostr.huszonegy.world',
+  'nostr.mom',
+  'nostr.openhoofd.nl',
+  'nostr.petrkr.net/strfry',
   'nostr.sathoarder.com',
-  'relay.nostromo.social',
-  'relay.nostr.bg',
   'nostr.stakey.net',
   'nostr.vulpem.com',
-  'a.nos.lol',
-  'eu.purplerelay.com',
   'nostr2.sanhauf.com',
-  'e.nos.lol'
+  'nostrelay.circum.space',
+  'relay.fountain.fm',
+  'relay.nostraddress.com',
+  'relay.nostromo.social',
+  'relay.snort.social',
+  'relay.verified-nostr.com',
+  'strfry.openhoofd.nl',
+  'yabu.me/v2'
 ].map(url => 'wss://' + url)

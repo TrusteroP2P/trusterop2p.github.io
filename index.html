@@ -647,24 +647,24 @@ content="Serverless, decentralized and encrypted P2P chat based on Trystero"
       } else if (connectStrategy === "firebase") {
         if (fireBaseURL !== "none") {
           fireBase = true;
-          ({ joinRoom, selfId } = await import('./trystero-firebase.js'));
+          ({ joinRoom, selfId } = await import('./firebase.js'));
           document.getElementById("strategy").value = "firebase";
         } else {
           connectStrategy = "nostr";
-          ({ joinRoom, selfId } = await import('./trystero-nostr.js'));
+          ({ joinRoom, selfId } = await import('./nostr.js'));
           document.getElementById("strategy").value = "nostr";
         }
       } else if (connectStrategy === "nostr") {
-        ({ joinRoom, selfId } = await import('./trystero-nostr.js'));
+        ({ joinRoom, selfId } = await import('./nostr.js'));
         document.getElementById("strategy").value = "nostr"; // Use .value to set the value
       } else if (connectStrategy === "mqtt") {
-        ({ joinRoom, selfId } = await import('./trystero-mqtt.js'));
+        ({ joinRoom, selfId } = await import('./mqtt.js'));
         document.getElementById("strategy").value = "mqtt";
       } else if (connectStrategy === "ipfs") {
-        ({ joinRoom, selfId } = await import('./trystero-ipfs.js'));
+        ({ joinRoom, selfId } = await import('./ipfs.js'));
         document.getElementById("strategy").value = "ipfs";
       } else if (connectStrategy === "torrent") {
-        ({ joinRoom, selfId } = await import('./trystero-torrent.js'));
+        ({ joinRoom, selfId } = await import('./torrent.js'));
         document.getElementById("strategy").value = "torrent";
       }
       checkStrategySelect();
