@@ -417,6 +417,7 @@ content="Serverless, decentralized and encrypted P2P chat based on Trystero"
         <option value="mqtt">MQTT</option>
         <option value="ipfs">IPFS</option>
         <option value="firebase">Firebase</option>
+        <option value="server">Custom Server</option>
       </select>
     </div>
     <div style="display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 20px;">
@@ -633,8 +634,11 @@ content="Serverless, decentralized and encrypted P2P chat based on Trystero"
     const fireBaseURL = localStorage.getItem("fireBaseURL") || "none";
     const supaBaseURL = localStorage.getItem("supaBaseURL") || "https://cyiezatjolrcnizhzbxn.supabase.co";
     const supaBaseAPI = localStorage.getItem("supaBaseAPI") || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5aWV6YXRqb2xyY25pemh6YnhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjcxNzU5OTksImV4cCI6MjA0Mjc1MTk5OX0.flHjQCJMbLTlfcXiVNLQOs1JHUtd9GAa-njz7Dp6c3o";
+    const serverURL = localStorage.getItem("serverURL") || "";
+    const serverAPI = localStorage.getItem("serverAPI") || "";
     var supaBase = false;
     var fireBase = false;
+    var server = false;
     var blockChangeEvent = true;
     let joinRoom;
     let selfId;
@@ -666,6 +670,9 @@ content="Serverless, decentralized and encrypted P2P chat based on Trystero"
       } else if (connectStrategy === "torrent") {
         ({ joinRoom, selfId } = await import('./torrent.js'));
         document.getElementById("strategy").value = "torrent";
+      } else if (connectStrategy === "server") {
+        server=true;
+        document.getElementById("strategy").value = "server";
       }
       checkStrategySelect();
     }
@@ -684,7 +691,7 @@ content="Serverless, decentralized and encrypted P2P chat based on Trystero"
     const addImage = document.getElementById("attach-image");
     var getMessage;
     var sendMessage = {};
-    var peerInfo;
+    var peerInfo = 0;
     var hashes = {}; //So that other nodes don't try to spam a message by replaying it.        
     var visiblemessages = 0;
     var intervalID;
@@ -977,10 +984,10 @@ var RTCConfiguration = {
       var myURL = document.getElementById("database-url");
       var myAPI = document.getElementById("api-key");
       myAPI.style.display = "none";
-      if(selection == "supabase" || selection == "firebase") {
+      if(selection == "supabase" || selection == "firebase" || selection == "server") {
         myURL.style.display = "flex";
         myURL.style.justifyContent = "center";
-        if(selection == "supabase") {
+        if(selection == "supabase" || selection == "server") {
           myAPI.style.display = "flex";
           myAPI.style.align = "center";
         }
@@ -1028,6 +1035,15 @@ var RTCConfiguration = {
             localStorage.setItem("fireBaseURL", myURL)
           } else {
             await Swal.fire("Please enter a valid URL for Firebase");
+            return
+          }
+        }
+        if(selection == "server") {
+          if(myURL != '' && myAPI != '') {
+            localStorage.setItem("serverURL", myURL)
+            localStorage.setItem("serverAPI", myAPI)
+          } else {
+            await Swal.fire("Please enter a valid URL and API key");
             return
           }
         }
@@ -1143,18 +1159,24 @@ var RTCConfiguration = {
         try {
           var messages = await getMessagesFromIndexedDB(publickey);
           mymessages = messages['message'] || {};
-          sendUnreadMessages();
+          if(server) {            
+          } else {
+            sendUnreadMessages();
+          }
         } catch(error) {
           console.log(error);
           showNotification("Error", error);
         };
         roomselect(1);
+        if(server) {
+          startMessageChecker();
+        }
     }
     function roomselect(firsttime=0) {
       const roomList = document.getElementById("room-select");
       roomList.innerHTML = ""; // Clear the room list
 
-      const rooms = JSON.parse(localStorage.getItem(publickey + ":rooms")) || []; // Get rooms from localstorage or use an empty array if none are found
+      rooms = JSON.parse(localStorage.getItem(publickey + ":rooms")) || []; // Get rooms from localstorage or use an empty array if none are found
 
       if (rooms.length === 0) {
         const noRoomsElement = document.createElement("p");
@@ -1242,12 +1264,16 @@ var RTCConfiguration = {
           AESkey[currentroom] = myroom1[currentroom].AES;
           window.globalConfigFile = RTCConfiguration;
           try {
-            if(supaBase) {
-              joinThis({rtcConfig: RTCConfiguration, appId: supaBaseURL, supabaseKey: supaBaseAPI, password: myroom1[currentroom].AES}, currentroom);
-            } else if(fireBase) {
-              joinThis({rtcConfig: RTCConfiguration, appId: fireBaseURL, password: myroom1[currentroom].AES}, currentroom);
+            if(server) {
+              room[currentroom] = {'myroom':currentroom};
             } else {
-              joinThis({rtcConfig: RTCConfiguration, appId: 'Trustero', password: myroom1[currentroom].AES}, currentroom);
+              if(supaBase) {
+                joinThis({rtcConfig: RTCConfiguration, appId: supaBaseURL, supabaseKey: supaBaseAPI, password: myroom1[currentroom].AES}, currentroom);
+              } else if(fireBase) {
+                joinThis({rtcConfig: RTCConfiguration, appId: fireBaseURL, password: myroom1[currentroom].AES}, currentroom);
+              } else {
+                joinThis({rtcConfig: RTCConfiguration, appId: 'Trustero', password: myroom1[currentroom].AES}, currentroom);
+              }
             }
           } catch (e) {
             console.log(e);
@@ -1303,12 +1329,16 @@ var RTCConfiguration = {
         AESkey[currentroom] = myroom1[currentroom].AES;
         window.globalConfigFile = RTCConfiguration;
         try {
-          if(supaBase) {
-            joinThis({rtcConfig: RTCConfiguration, appId: supaBaseURL, supabaseKey: supaBaseAPI, password: myroom1[currentroom].AES}, currentroom);
-          } else if(fireBase) {
-            joinThis({rtcConfig: RTCConfiguration, appId: fireBaseURL, password: myroom1[currentroom].AES}, currentroom);
+          if(server) {
+            room[currentroom] = {'myroom':currentroom};
           } else {
-            joinThis({rtcConfig: RTCConfiguration, appId: 'Trustero', password: myroom1[currentroom].AES}, currentroom);
+            if(supaBase) {
+              joinThis({rtcConfig: RTCConfiguration, appId: supaBaseURL, supabaseKey: supaBaseAPI, password: myroom1[currentroom].AES}, currentroom);
+            } else if(fireBase) {
+              joinThis({rtcConfig: RTCConfiguration, appId: fireBaseURL, password: myroom1[currentroom].AES}, currentroom);
+            } else {
+              joinThis({rtcConfig: RTCConfiguration, appId: 'Trustero', password: myroom1[currentroom].AES}, currentroom);
+            }
           }
         } catch (e) {
           console.log(e)
@@ -1449,19 +1479,142 @@ var RTCConfiguration = {
 
     function sleep(ms) {
       return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function hashObject(obj) {
+      return Crypto.SHA256(Object.keys(obj).sort().map(key => Crypto.SHA256(key + obj[key])).join('')).toString();
+    }
+
+    function hexlify(str) {
+        let hexStr = '';
+        for (let i = 0; i < str.length; i++) {
+            hexStr += str.charCodeAt(i).toString(16).padStart(2, '0'); // Convert each character to hex
+        }
+        return hexStr;
+    }
+
+    let checkInterval = 60; // Global interval in seconds
+
+    function startMessageChecker() {
+      setInterval(async () => {
+        try {
+          const response = await serverRequest("getMessages");
+          const readSent = JSON.parse(localStorage.getItem(publickey + ":readSent"))  || {'readSent': {}};
+          var changedThis = 0;
+          for (const mykey in response['readSent']) {
+            if (response['readSent'].hasOwnProperty(mykey)) {
+              if(!(mykey in readSent) || response['readSent'][mykey] != readSent[mykey]) {
+                for (let roomX in mymessages) {
+                  if(server) {
+                    break;
+                  }
+                  if (!(roomX.endsWith("unread"))) {
+                    // Update read messages
+                    var startedThis = false;
+                    for (let i = 0; i < mymessages[roomX].length; i++) {
+                      let messageData = mymessages[roomX][i];
+                      try {
+                        if(mymessages[roomX][i].peerInfo > 0) {
+                          break;
+                        }
+                        if(messageData.msgID == response['readSent'][mykey]) {
+                          startedThis = true;                          
+                        }
+                        if(startedThis == true) {
+                          mymessages[roomX][i].peerInfo = 1;
+                          changedThis = 1;
+                        }
+                      } catch (e) {
+                        console.log(e);
+                      }
+                    }
+                  }
+                }
+                readSent[mykey] = response['readSent'][mykey];
+              }
+            }
+          }
+          localStorage.setItem(publickey + ":readSent",JSON.stringify(readSent));
+          if(response.messages.length>0) {
+            for (let i = 0; i < response.messages.length; i++) {
+              await showMessage(response.messages[i][0],response.messages[i][1]);
+            }
+          }
+          if(changedThis == 1) {
+            await populateMessages();
+          }
+        } catch (error) {
+          console.error("Error during message check:", error);
+        }
+      }, checkInterval * 1000);
+      console.log(`Message checker started, polling every ${checkInterval} seconds.`);
     }    
+
+    async function serverRequest(req="getMessages", payload={}) {
+        var lastHash = '';
+        if(req == "getMessages") {
+          const serverData = JSON.parse(localStorage.getItem(publickey + ":serverData"))  || {'lastHash': '', 'public': publickey};
+          lastHash = serverData['lastHash'];
+          payload = serverData;
+        }
+        if(req == "sendMessage") {
+        }
+        var timestamp = Math.floor(Date.now() / 1000)
+        var themessage = JSON.stringify(payload) + "#!#!#!#" + timestamp + "#!#!#!#" + rand + Crypto.SHA256(rand);//Add some junk data to avoid cryptoanalysis
+        var encrypted = cryptico.encrypt(themessage, serverAPI, RSAKeys).cipher;
+        const requestData = {
+            action: req,
+            item: "",
+            value: encrypted,
+            key: "",
+            public: publickey,
+            lastHash: lastHash
+        };
+        
+        try {
+            const response = await axios.post(serverURL, requestData, {
+                headers: { 'ngrok-skip-browser-warning':true, 'Content-Type': 'application/json'}
+            });
+            if (response.data.result) {
+                if(req=="getMessages") {
+                  const resp = JSON.parse(DOMPurify.sanitize(JSON.stringify(response.data.result)));
+                  if('lastHash' in resp) {
+                    localStorage.setItem(publickey + ":serverData",JSON.stringify({'lastHash':resp['lastHash'],'public':publickey}))
+                  }
+                  return resp;
+                } else {
+                  const resp = JSON.parse(DOMPurify.sanitize(JSON.stringify(response.data.result)));
+                  if("error" in resp) {
+                    console.log(resp.error);
+                    return "error";
+                  }
+                  return "success";
+                }
+            } else if (response.data.error) {
+                console.log('Error:' + response.data.error);
+                return "error";
+            }
+        } catch (error) {
+            console.log(error.message);
+            return "error";
+        }
+    }
+
     async function sendUnreadMessages() {
       intervalID = setInterval(async () => {
         // Assume peerInfo is defined and we are checking its value
-        for (let room in mymessages) {
-          if (room.endsWith("unread")) {
-            let actualRoom = room.replace("unread", "");
+        for (let roomZ in mymessages) {
+          if(server) {
+            break;
+          }
+          if (roomZ.endsWith("unread")) {
+            let actualRoom = roomZ.replace("unread", "");
             updatePeerInfo(actualRoom);
             if (parseInt(peerInfo) > 0) {
               // Send and delete messages
               var changed = 0;
-              for (let i = 0; i < mymessages[room].length; i++) {
-                let messageData = mymessages[room][i];
+              for (let i = 0; i < mymessages[roomZ].length; i++) {
+                let messageData = mymessages[roomZ][i];
                 try {
                   await sleep(100);
                   sendMessage[actualRoom](messageData.message);
@@ -1471,7 +1624,7 @@ var RTCConfiguration = {
                 } catch (e) {
                   console.log(e);
                 }
-                mymessages[room].splice(i, 1);
+                mymessages[roomZ].splice(i, 1);
                 addMessageToIndexedDB(publickey, mymessages);
                 changed = 1;
                 i--;
@@ -1491,7 +1644,9 @@ var RTCConfiguration = {
         thisroom = currentroom;
       }
       if (room[thisroom]) {
-        updatePeerInfo(thisroom);
+        if(!server) {
+          updatePeerInfo(thisroom);
+        }
         if(msg == "") {
             msg = DOMPurify.sanitize(document.getElementById("mymessage").value);
         }
@@ -1504,11 +1659,25 @@ var RTCConfiguration = {
         var themessage = msg + "#!#!#!#" + timestamp + "#!#!#!#" + rand + Crypto.SHA256(rand);//Add some junk data to avoid cryptoanalysis
         var encrypted = cryptico.encrypt(themessage, theirpublickey[thisroom], RSAKeys);
         var msgID = Crypto.SHA256(rand);
-        if(parseInt(peerInfo) > 0) {
+        if(server || parseInt(peerInfo) > 0) {
           if(AESkey[thisroom] == 'optional') {
-              sendMessage[thisroom]([encrypted.cipher]);
+              if(server) {
+                const resp = await serverRequest("sendMessage", {"room":thisroom,"message":[encrypted.cipher],"public":publickey,"theirpublic":theirpublickey[thisroom],"msgID":msgID});
+                if(resp == "error") {
+                  return;
+                }
+              } else {
+                sendMessage[thisroom]([encrypted.cipher]);
+              }
           } else {
-              sendMessage[thisroom]([CryptoJS.AES.encrypt(encrypted.cipher, AESkey[thisroom]).toString()]);
+              if(server) {
+                const resp = await serverRequest("sendMessage", {"room":thisroom,"message":[CryptoJS.AES.encrypt(encrypted.cipher, AESkey[thisroom]).toString()],"public":publickey,"theirpublic":theirpublickey[thisroom],"msgID":msgID});
+                if(resp == "error") {
+                  return;
+                }
+              } else {
+                sendMessage[thisroom]([CryptoJS.AES.encrypt(encrypted.cipher, AESkey[thisroom]).toString()]);
+              }
           }
         } else {
           if(!((thisroom+"unread") in mymessages)) {
@@ -1841,28 +2010,30 @@ var RTCConfiguration = {
     });
 
     async function joinThis(config, myroom2) {
-        if(room[myroom2]) {
-            console.log("Entering chat: ", myroom2);
-            return;
-        }
-        room[myroom2] = joinRoom(config, myroom2);
-        room[myroom2].myroom = myroom2;
-        room[myroom2].onPeerJoin(peerId => notify(`${peerId} joined`,myroom2));
-        room[myroom2].onPeerLeave(peerId => notify(`${peerId} left`,myroom2));
-        ;[sendMessage[myroom2], getMessage] = room[myroom2].makeAction('message');
-        getMessage(createMessageHandler(myroom2));
+      if(room[myroom2]) {
+        console.log("Entering chat: ", myroom2);
+        return;
+      }
+      room[myroom2] = joinRoom(config, myroom2);
+      room[myroom2].myroom = myroom2;
+      room[myroom2].onPeerJoin(peerId => notify(`${peerId} joined`,myroom2));
+      room[myroom2].onPeerLeave(peerId => notify(`${peerId} left`,myroom2));
+      ;[sendMessage[myroom2], getMessage] = room[myroom2].makeAction('message');
+      getMessage(createMessageHandler(myroom2));
     }
 
     function createMessageHandler(room7) {
-        return function(message) {
-            //console.log('Message received in room:', room7);
-            showMessage(message, room7);
-        };
+      return function(message) {
+        //console.log('Message received in room:', room7);
+        showMessage(message, room7);
+      };
     }
 
     async function removeThis(theroom) {
+      if(!server) {
         room[theroom].leave(theroom);
-        delete room[theroom];
+      }
+      delete room[theroom];
     }    
     var muted = false;
     var speakers = false;
@@ -1881,7 +2052,11 @@ var RTCConfiguration = {
         track.enabled = true;
       }
     });
-    document.getElementById("audio-call").addEventListener('click', async function () {      
+    document.getElementById("audio-call").addEventListener('click', async function () {
+      if(server) {
+        await Swal.fire("This option is not available for the server connection method.");
+        return;
+      }
       const mediaDevices = navigator.mediaDevices;
       const outputDevices = await mediaDevices.enumerateDevices();
       if (outputDevices.length < 2) {
@@ -2072,7 +2247,7 @@ var RTCConfiguration = {
         if(newmessage.plaintext.length < 85) {
             return //Message seems a bit small lets just not let counter-party know if we can decrypt it avoid any cryptoanalysis
         }
-        //This both decrypts and v5erifies they signed the message
+        //This both decrypts and verifies they signed the message
         if(newmessage.signature == "verified" && newmessage.publicKeyString == theirpublickey[myroom5]) {
             var msg = newmessage.plaintext.split("#!#!#!#")[0]
             msg = DOMPurify.sanitize(msg);
@@ -2149,12 +2324,16 @@ var RTCConfiguration = {
         localStorage.setItem(publickey + ":rooms", JSON.stringify(rooms));
         window.globalConfigFile = RTCConfiguration;
         try {
-          if(supaBase) {
-            joinThis({rtcConfig: RTCConfiguration, appId: supaBaseURL, supabaseKey: supaBaseAPI, password: AESkey2}, sharedKeys);
-          } else if(fireBase) {
-            joinThis({rtcConfig: RTCConfiguration, appId: fireBaseURL, password: AESkey2}, sharedKeys);
+          if(server) {
+            room[sharedKeys] = {'myroom':sharedKeys};
           } else {
-            joinThis({rtcConfig: RTCConfiguration, appId: 'Trustero', password: AESkey2}, sharedKeys);
+            if(supaBase) {
+              joinThis({rtcConfig: RTCConfiguration, appId: supaBaseURL, supabaseKey: supaBaseAPI, password: AESkey2}, sharedKeys);
+            } else if(fireBase) {
+              joinThis({rtcConfig: RTCConfiguration, appId: fireBaseURL, password: AESkey2}, sharedKeys);
+            } else {
+              joinThis({rtcConfig: RTCConfiguration, appId: 'Trustero', password: AESkey2}, sharedKeys);
+            }
           }
         } catch (e) {
           console.log(e);
