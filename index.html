@@ -1504,41 +1504,45 @@ var RTCConfiguration = {
           var changedThis = 0;
           for (const mykey in response['readSent']) {
             if (response['readSent'].hasOwnProperty(mykey)) {
-              if(!(mykey in readSent) || response['readSent'][mykey] != readSent[mykey]) {
-                for (let roomX in mymessages) {
-                  if(server) {
-                    break;
-                  }
-                  if (!(roomX.endsWith("unread"))) {
-                    // Update read messages
-                    var startedThis = false;
-                    for (let i = 0; i < mymessages[roomX].length; i++) {
-                      let messageData = mymessages[roomX][i];
-                      try {
-                        if(mymessages[roomX][i].peerInfo > 0) {
-                          break;
+              if(response['readSent'][mykey]!="") {
+                if(!(mykey in readSent) || response['readSent'][mykey] != readSent[mykey]) {
+                  for (let roomX in mymessages) {
+                    if(server) {
+                      break;
+                    }
+                    if (!(roomX.endsWith("unread"))) {
+                      // Update read messages
+                      var startedThis = false;
+                      for (let i = 0; i < mymessages[roomX].length; i++) {
+                        let messageData = mymessages[roomX][i];
+                        try {
+                          if(mymessages[roomX][i].peerInfo > 0) {
+                            break;
+                          }
+                          if(messageData.msgID == response['readSent'][mykey]) {
+                            startedThis = true;                          
+                          }
+                          if(startedThis == true) {
+                            mymessages[roomX][i].peerInfo = 1;
+                            changedThis = 1;
+                          }
+                        } catch (e) {
+                          console.log(e);
                         }
-                        if(messageData.msgID == response['readSent'][mykey]) {
-                          startedThis = true;                          
-                        }
-                        if(startedThis == true) {
-                          mymessages[roomX][i].peerInfo = 1;
-                          changedThis = 1;
-                        }
-                      } catch (e) {
-                        console.log(e);
                       }
                     }
                   }
+                  readSent[mykey] = response['readSent'][mykey];
                 }
-                readSent[mykey] = response['readSent'][mykey];
               }
             }
           }
           localStorage.setItem(publickey + ":readSent",JSON.stringify(readSent));
-          if(response.messages.length>0) {
-            for (let i = 0; i < response.messages.length; i++) {
-              await showMessage(response.messages[i][0],response.messages[i][1]);
+          if("messages" in response) {
+            if(response.messages.length>0) {
+              for (let i = 0; i < response.messages.length; i++) {
+                await showMessage(response.messages[i][0],response.messages[i][1]);
+              }
             }
           }
           if(changedThis == 1) {
