@@ -643,41 +643,45 @@ content="Serverless, decentralized and encrypted P2P chat based on Trystero"
     var blockChangeEvent = true;
     let joinRoom;
     let selfId;
+    var pageIsLoaded = false;
     async function loadModule() {
       if (connectStrategy === "supabase") {
         // Correct destructuring assignment
-        ({ joinRoom, selfId } = await import('./trystero-supabase.js'));
         supaBase = true;
         document.getElementById("strategy").value = "supabase";
+        ({ joinRoom, selfId } = await import('./trystero-supabase.js'));
       } else if (connectStrategy === "firebase") {
         if (fireBaseURL !== "none") {
           fireBase = true;
-          ({ joinRoom, selfId } = await import('./firebase.js'));
           document.getElementById("strategy").value = "firebase";
+          ({ joinRoom, selfId } = await import('./firebase.js'));          
         } else {
           connectStrategy = "nostr";
-          ({ joinRoom, selfId } = await import('./nostr.js'));
           document.getElementById("strategy").value = "nostr";
+          ({ joinRoom, selfId } = await import('./nostr.js'));          
         }
       } else if (connectStrategy === "nostr") {
-        ({ joinRoom, selfId } = await import('./nostr.js'));
-        document.getElementById("strategy").value = "nostr"; // Use .value to set the value
+        document.getElementById("strategy").value = "nostr";
+        ({ joinRoom, selfId } = await import('./nostr.js'));        
       } else if (connectStrategy === "mqtt") {
-        ({ joinRoom, selfId } = await import('./mqtt.js'));
         document.getElementById("strategy").value = "mqtt";
+        ({ joinRoom, selfId } = await import('./mqtt.js'));        
       } else if (connectStrategy === "ipfs") {
-        ({ joinRoom, selfId } = await import('./ipfs.js'));
         document.getElementById("strategy").value = "ipfs";
+        ({ joinRoom, selfId } = await import('./ipfs.js'));        
       } else if (connectStrategy === "torrent") {
-        ({ joinRoom, selfId } = await import('./torrent.js'));
         document.getElementById("strategy").value = "torrent";
+        ({ joinRoom, selfId } = await import('./torrent.js'));        
       } else if (connectStrategy === "server") {
         server=true;
         document.getElementById("strategy").value = "server";
-      }
-      checkStrategySelect();
+      }      
     }
-    loadModule();
+    document.addEventListener('DOMContentLoaded', async () => {      
+      await loadModule();
+      pageIsLoaded = true;
+      checkStrategySelect();
+    });
     blockChangeEvent = false;
     //import {iceServers}  from './config.js';
     const closecreate = document.getElementById("closeCreate");
@@ -770,6 +774,10 @@ content="Serverless, decentralized and encrypted P2P chat based on Trystero"
          return {'blob':res.blob, 'result':buff.type.startsWith('image/')};
     }
     loginthis.addEventListener('click', async function() {
+        if(!pageIsLoaded) {
+          Swal.fire("Please wait a moment for the page to finish loading.")
+          return;
+        }
         await login();
     });
     function openDatabase() {
@@ -994,8 +1002,6 @@ var RTCConfiguration = {
         }
         myURL.value = "";
         myAPI.value = "";
-        console.log("a")
-        console.log(selection)
         if(selection == "firebase") {
           if(fireBaseURL != 'none') {
             myURL.value = fireBaseURL;
@@ -1006,7 +1012,6 @@ var RTCConfiguration = {
           myAPI.value = supaBaseAPI;
         }
         if(selection == "server") {
-          console.log("setting: " + serverURL)
           myURL.value = serverURL;
           myAPI.value = serverAPI;
         }
