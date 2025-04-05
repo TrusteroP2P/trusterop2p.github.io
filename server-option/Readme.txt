@@ -48,8 +48,7 @@ Run the server
 _____________________________________________________________________________________________
 
 Finally load "pythonserver.bat" which will automatically boot up your ngrok server and
-your python server. You are of course able to edit the python code and index to run different
-apis or use different locally run AI models.
+your python server. You are of course able to edit the python code and improve on the code.
 
 _____________________________________________________________________________________________
 Share your node with your friends
