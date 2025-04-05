@@ -994,6 +994,8 @@ var RTCConfiguration = {
         }
         myURL.value = "";
         myAPI.value = "";
+        console.log("a")
+        console.log(selection)
         if(selection == "firebase") {
           if(fireBaseURL != 'none') {
             myURL.value = fireBaseURL;
@@ -1004,6 +1006,7 @@ var RTCConfiguration = {
           myAPI.value = supaBaseAPI;
         }
         if(selection == "server") {
+          console.log("setting: " + serverURL)
           myURL.value = serverURL;
           myAPI.value = serverAPI;
         }
