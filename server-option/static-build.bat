@@ -1,0 +1,1 @@
+pyinstaller --onefile --uac-admin --add-data "static/*;static" server.py

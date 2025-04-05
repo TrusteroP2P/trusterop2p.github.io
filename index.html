@@ -294,9 +294,9 @@ content="Serverless, decentralized and encrypted P2P chat based on Trystero"
   <div style="background-color: #282828; border-radius: 7px; padding: 10px; width: 95%; height: 50px; margin-bottom: 10px; display: flex; align-items: center;">
     <button id="attach-image" class="attach-image-button" style="background-color: transparent; border: none; color: white; font-family: 'Gilroy', sans-serif; font-size: 18px; margin-right: 10px; cursor: pointer;">📎
     </button>
+    <span id="emoji" class="emoji-click" style="cursor: pointer; padding-right: 10px;">😊</span>
     <div class="custom-input" style="background-color: rgba(0, 0, 0, 0.1); border: 1px solid white; border-radius: 5px; padding: 10px; width: 75%; margin-right: 10px; color: ivory;">
-      <input type="text" class="emoji-placement" id="mymessage" style="background-color: transparent; color:lightgray; border: none; outline: none; width: calc(100% - 30px); /* Adjust 40px as needed */" placeholder="Message">
-      <span id="emoji" class="emoji-click" style="cursor: pointer;">😊</span>
+      <input type="text" class="emoji-placement" id="mymessage" style="background-color: transparent; color:lightgray; border: none; outline: none; width: calc(100% - 30px); /* Adjust 40px as needed */" placeholder="Message">      
     </div>
     <button id="sendbutton" style="background-color: #3e65f5; border: none; border-radius: 7px; color: white; font-family: 'Gilroy', sans-serif; font-size: 18px; padding: 10px 15px; cursor: pointer;">Send</button>
     <button id="voice-call" class="phone-button" style="background-color: transparent; border: none; color: white; font-family: 'Gilroy', sans-serif; font-size: 18px; margin-left: 20px; cursor: pointer;">
@@ -992,6 +992,21 @@ var RTCConfiguration = {
           myAPI.style.display = "flex";
           myAPI.style.align = "center";
         }
+        myURL.value = "";
+        myAPI.value = "";
+        if(selection == "firebase") {
+          if(fireBaseURL != 'none') {
+            myURL.value = fireBaseURL;
+          }
+        }
+        if(selection == "supabase") {
+          myURL.value = supaBaseURL;
+          myAPI.value = supaBaseAPI;
+        }
+        if(selection == "server") {
+          myURL.value = serverURL;
+          myAPI.value = serverAPI;
+        }
       } else {
         myURL.style.display = "none";
       }
@@ -1465,6 +1480,10 @@ var RTCConfiguration = {
         show("call-screen");
     });
     voicethis.addEventListener('click', async function() {
+        if(server) {
+          await Swal.fire("This option is not available for the server connection method.");
+          return;
+        }
         show("chat-screen", "none");
         show("call-screen");
         await voicecall(currentroom);
@@ -1494,35 +1513,42 @@ var RTCConfiguration = {
         return hexStr;
     }
 
-    let checkInterval = 60; // Global interval in seconds
+    let checkInterval = [15,15,15,15,30,30,30,30,60,60,120,120,240,240,480,480,960]; // Global interval in seconds
+    let intervalPos = 0;
+    let checkerRunning = false;
 
-    function startMessageChecker() {
-      setInterval(async () => {
+    async function messageCheckLoop() {
+      if (checkerRunning) return; // prevent duplicate loops
+      checkerRunning = true;
+
+      while (true) {
+        console.log("Checking messages: " + checkInterval[intervalPos]);        
         try {
           const response = await serverRequest("getMessages");
-          const readSent = JSON.parse(localStorage.getItem(publickey + ":readSent"))  || {'readSent': {}};
-          var changedThis = 0;
+          if (response == "error") {
+            throw new Error("Error checking messages");
+          }
+          const readSent = JSON.parse(localStorage.getItem(publickey + ":readSent")) || { 'readSent': {} };
+          let changedThis = 0;
+
           for (const mykey in response['readSent']) {
             if (response['readSent'].hasOwnProperty(mykey)) {
-              if(response['readSent'][mykey]!="") {
-                if(!(mykey in readSent) || response['readSent'][mykey] != readSent[mykey]) {
+              if (response['readSent'][mykey] != "") {
+                if (!(mykey in readSent) || response['readSent'][mykey] != readSent[mykey]) {
                   for (let roomX in mymessages) {
-                    if(server) {
-                      break;
-                    }
                     if (!(roomX.endsWith("unread"))) {
-                      // Update read messages
-                      var startedThis = false;
+                      let startedThis = false;
                       for (let i = 0; i < mymessages[roomX].length; i++) {
                         let messageData = mymessages[roomX][i];
+                        if (messageData.sent != 1) {
+                          continue;
+                        }
                         try {
-                          if(mymessages[roomX][i].peerInfo > 0) {
-                            break;
+                          if (messageData.peerInfo > 0) break;
+                          if (messageData.msgID == response['readSent'][mykey]) {
+                            startedThis = true;
                           }
-                          if(messageData.msgID == response['readSent'][mykey]) {
-                            startedThis = true;                          
-                          }
-                          if(startedThis == true) {
+                          if (startedThis) {
                             mymessages[roomX][i].peerInfo = 1;
                             changedThis = 1;
                           }
@@ -1537,22 +1563,35 @@ var RTCConfiguration = {
               }
             }
           }
-          localStorage.setItem(publickey + ":readSent",JSON.stringify(readSent));
-          if("messages" in response) {
-            if(response.messages.length>0) {
-              for (let i = 0; i < response.messages.length; i++) {
-                await showMessage(response.messages[i][0],response.messages[i][1]);
-              }
+
+          localStorage.setItem(publickey + ":readSent", JSON.stringify(readSent));
+
+          if ("messages" in response && response.messages.length > 0) {
+            intervalPos = 0;
+            for (let i = 0; i < response.messages.length; i++) {
+              await showMessage(response.messages[i][0], response.messages[i][1]);
             }
           }
-          if(changedThis == 1) {
+
+          if (changedThis == 1) {
+            document.getElementById("messages").innerHTML = "";
             await populateMessages();
           }
+
         } catch (error) {
           console.error("Error during message check:", error);
+        }        
+        // Wait for the next interval dynamically
+        await new Promise(resolve => setTimeout(resolve, checkInterval[intervalPos] * 1000));
+        if(intervalPos + 1 < checkInterval.length) {
+          intervalPos += 1;
         }
-      }, checkInterval * 1000);
-      console.log(`Message checker started, polling every ${checkInterval} seconds.`);
+      }
+    }
+
+    function startMessageChecker() {
+      messageCheckLoop();
+      console.log(`Message checker started. It will poll every 'checkInterval' seconds (currently: ${checkInterval}).`);
     }
 
     async function serverRequest(req="getMessages", payload={}) {
@@ -1671,6 +1710,7 @@ var RTCConfiguration = {
                 if(resp == "error") {
                   return;
                 }
+                intervalPos = 0;
               } else {
                 sendMessage[thisroom]([encrypted.cipher]);
               }
@@ -1680,6 +1720,7 @@ var RTCConfiguration = {
                 if(resp == "error") {
                   return;
                 }
+                intervalPos = 0;
               } else {
                 sendMessage[thisroom]([CryptoJS.AES.encrypt(encrypted.cipher, AESkey[thisroom]).toString()]);
               }
@@ -1810,7 +1851,7 @@ var RTCConfiguration = {
 
     addImage.addEventListener('click', async function()  {
         myimage = false;
-        myimage = await getB64Image();        
+        myimage = await getB64Image();
         if(myimage) {            
             myimage = "data:image/png;base64," + myimage;
             if(compressthis.checked) {
@@ -2058,10 +2099,6 @@ var RTCConfiguration = {
       }
     });
     document.getElementById("audio-call").addEventListener('click', async function () {
-      if(server) {
-        await Swal.fire("This option is not available for the server connection method.");
-        return;
-      }
       const mediaDevices = navigator.mediaDevices;
       const outputDevices = await mediaDevices.enumerateDevices();
       if (outputDevices.length < 2) {

@@ -1,0 +1,2417 @@
+<!DOCTYPE html>
+<html lang="en">
+<script type="text/javascript" src="./ellipticcurve.js"></script>
+<script type="text/javascript" src="./crypto-sha256.js"></script>
+<script type="text/javascript" src="./jsbn.js"></script>
+<script type="text/javascript" src="./aes.js"></script>
+<script type="text/javascript" src="./crypto-js.js"></script>
+<script type="text/javascript" src="./cryptico.min.js"></script>
+<script type="text/javascript" src="./purify.js"></script>
+<script type="text/javascript" src="./jquery.min.js"></script>
+<script type="text/javascript" src="./sweetalert2.min.js"></script>
+<script type="text/javascript" src="./jdenticon.min.js"></script>
+<script type="text/javascript" src="./config.js"></script>
+<script type="text/javascript" src="./axios.min.js"></script>
+<script src="./uikit.min.js"></script>
+<script src="./uikit-icons.min.js"></script>
+<script src="./vanillaEmojiPicker.js"></script>
+<head>
+<meta charset="utf-8" />
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0, user-scalable=no"
+/>
+<meta
+name="description"
+content="Serverless, decentralized and encrypted P2P chat based on Trystero"
+/>
+<link rel="manifest" href="manifest.json">
+<link href="favicon.png" rel="icon" type="image/png" />
+<link rel="stylesheet" href="./icons-all.min.css">
+<link rel="stylesheet" href="./sweetalert2.min.css"></link>
+<link rel="stylesheet" href="./uikit.min.css" />
+<style>
+  html, body {
+      scroll-behavior: auto; /* To avoid Firefox's native smooth scrolling issues */
+      -webkit-overflow-scrolling: touch; /* For smoother scrolling on iOS */
+  }
+  .scrollable {
+  }
+  @font-face {
+    font-family: 'Gilroy';
+    src: url('fonts/Gilroy-Light.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'Gilroy-Black';
+    src: url('fonts/Gilroy-Black.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+
+  .swal2-popup {
+    position: fixed;
+    z-index: 1000;
+    background-color: #181818; /* Dark background */
+    color: #fff; /* Light text */
+    border: 2px solid #3d0064;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: 'Gilroy', sans-serif;
+    font-weight: normal;
+    padding: 20px; /* Add padding for spacing */
+  }
+  .swal2-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: lightgray;
+  }
+  .swal2-content {
+    text-align: center;
+    margin-bottom: 10px;
+    padding: 10px;
+  }
+  .swal2-actions {
+    display: flex;
+    justify-content: center; /* Center buttons horizontally */
+    margin-bottom: 10px;
+  }
+  .swal2-confirm,
+  .swal2-cancel {
+    background-color: #3d0064;
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+    margin: 10px; /* Horizontal spacing between buttons */
+  }
+  .swal2-confirm:hover,
+  .swal2-cancel:hover {
+    background-color: #4d0074;
+  }
+  .swal2-icon {
+    color: #fff;
+  }
+  .swal2-range {
+    background-color: #282828;
+    border: 2px solid #3d0064;
+  }
+  @media (max-width: 600px) {
+      .swal2-popup {
+          font-size: 12px; /* Smaller font size on small screens */
+          padding: 15px; /* Reduce padding */
+      }
+      
+      .swal2-title {
+          font-size: 16px; /* Smaller title */
+      }
+      
+      .swal2-confirm,
+      .swal2-cancel {
+          padding: 8px 15px; /* Smaller button padding */
+          margin: 5px; /* Less margin between buttons */
+      }
+  }
+
+  @media (max-width: 400px) {
+      .swal2-popup {
+          font-size: 10px; /* Even smaller font size */
+          padding: 10px; /* Further reduce padding */
+      }
+      
+      .swal2-title {
+          font-size: 14px; /* Smaller title */
+      }
+      
+      .swal2-confirm,
+      .swal2-cancel {
+          padding: 6px 10px; /* Smaller button padding */
+          margin: 3px; /* Less margin between buttons */
+      }
+  }
+
+.notify-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #111017;
+    border-radius: 5px;
+    padding: 5px;
+    margin: 5px;
+    flex-wrap: wrap; /* Allows content to wrap to a new line */
+    width: 100%; /* Ensures the container takes up the full width of its parent */
+    max-width: 100%; /* Prevents the container from exceeding its parent's width */
+    box-sizing: border-box; /* Ensures padding is included in the element's width */
+}
+
+.notify-content {
+    color: ivory;
+    margin: 0 5px; /* Adjust margin as needed */
+    flex: 1 1 auto; /* Allows the content to grow and shrink */
+    word-wrap: break-word; /* Ensures long words break properly */
+    overflow-wrap: break-word; /* Provides additional word-breaking control */
+    text-align: center; /* Center-aligns the text */
+    width: 100%; /* Ensures the content spans the full width on small screens */
+}
+  .fg-emoji-container {
+  }
+</style>
+<style>
+    div.myinfo {
+        width: 100%;
+        height: 55px;
+        word-wrap: break-word;
+        overflow-y: auto;
+        text-align: center;
+        padding: 20px;
+        border: 1px solid black;
+    }
+</style>
+<style>
+    div.scroll {
+        background-color: #090909;
+        color: #E4E9F0;
+        width: 100%;
+        height: 400px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        word-wrap: break-word;
+        text-align: center;
+        padding: 5px;
+        border: 2px;
+    }
+    body {
+        overscroll-behavior-y: contain;
+    }
+    HTML {
+        overscroll-behavior: none;
+    }
+</style>
+</head>
+<title>Trustero chat</title>
+<body onClick='{rng_seed_time();}' style="background-color: #111017; color: #E4E9F0;">
+<header>
+</header>
+<div id="main-div" style="height: 100%; width: 100%;">
+<div id="login-screen" style="background: url('gradient.png'); background-size: cover; width: 100%; height: 100vh; justify-content: center; align-items: center; flex-direction: column; display: flex;"> 
+  <img src="logo.png" alt="Logo" style="width: 100px; margin-top: 20px;"/>
+  <div style="width: 100%; display: flex; justify-content: center; align-items: center; position: relative;">
+    <h1 style="text-align: center; font-size: 16pt; font-family: 'Gilroy', sans-serif; color: ivory; margin-top: 10px;">Trustero</h1>
+    <span id="mysettings1" style="font-size: 24px; cursor: pointer; position: absolute; right: 15%;">⚙️</span>
+  </div>
+  <input class="textBox" id="username" type="text" style="width: 75%; background-color: rgba(255, 255, 255, 0.05); border: 1px solid gray; border-radius: 10px; padding: 10px; margin-top: 20px; color: ivory; box-sizing: border-box;" placeholder="&#x1F464; Username" required/>
+  <input class="textBox" id="password" type="password" style="width: 75%; background-color: rgba(255, 255, 255, 0.05); border: 1px solid gray; border-radius: 10px; padding: 10px; margin-top: 20px; color: ivory; box-sizing: border-box;" placeholder="&#x1F512; Password" required/>
+  <input type="button" id="login" value="Login" style="width: 75%; background-color: #3e65f5; font-family: 'Gilroy', sans-serif; color: white; border: none; border-radius: 10px; padding: 10px; margin-top: 20px; cursor: pointer; font-size: 14pt;"/>
+  <h1 style="text-align: center; font-size: 8pt; font-family: 'Gilroy', sans-serif; color: ivory; margin-top: 10px;">P2P Chat: Serverless, decentralized, encrypted</h1>  
+</div>
+<div id="pin-screen" style="background: url('gradient.png'); background-size: cover; width: 100%; height: 100vh; justify-content: center; align-items: center; flex-direction: column; display: none;">
+<h1 style="font-family: 'Gilroy', sans-serif; font-size: 20px; text-align: center; color: ivory"><span id="mysettings2" style="font-size: 24px; cursor: pointer; position: absolute; right: 15%;">⚙️</span>Enter your pin code</h1>
+
+<input type="password" id="pin-password" style="background-color: rgba(0, 0, 0, 0.25); border: 1px solid white; border-radius: 10px; width: 100%; max-width: 250px; /* Adjust max-width as needed */ height: 40px; font-size: 18px; color: ivory; text-align: center;">
+  <div style="display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center;">
+    <div style="display: flex; flex-direction: column;  
+ align-items: center;">
+      <button class="pin-button" style="background-color: rgba(0, 0, 0, 0.40); border: 1px solid #007bff; border-radius: 50%; color: white; font-family: 'Gilroy', sans-serif; font-size: 18px; width: 50px; height: 50px; margin: 10px 5px;">1</button>
+      <button class="pin-button" style="background-color: rgba(0, 0, 0, 0.40); border: 1px solid #007bff; border-radius: 50%; color: white; font-family: 'Gilroy', sans-serif; font-size: 18px; width: 50px; height: 50px; margin: 10px 5px;">4</button>
+      <button class="pin-button" style="background-color: rgba(0, 0, 0, 0.40); border: 1px solid #007bff; border-radius: 50%; color: white; font-family: 'Gilroy', sans-serif; font-size: 18px; width: 50px; height: 50px; margin: 10px 5px;">7</button>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center;">
+      <button class="pin-button" style="background-color: rgba(0, 0, 0, 0.40); border: 1px solid #007bff; border-radius: 50%; color: white; font-family: 'Gilroy', sans-serif; font-size: 18px; width: 50px; height: 50px; margin: 10px 5px;">2</button>
+      <button class="pin-button" style="background-color: rgba(0, 0, 0, 0.40); border: 1px solid #007bff; border-radius: 50%; color: white; font-family: 'Gilroy', sans-serif; font-size: 18px; width: 50px; height: 50px; margin: 10px 5px;">5</button>
+      <button class="pin-button" style="background-color: rgba(0, 0, 0, 0.40); border: 1px solid #007bff; border-radius: 50%; color: white; font-family: 'Gilroy', sans-serif; font-size: 18px; width: 50px; height: 50px; margin: 10px 5px;">8</button>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center;">
+      <button class="pin-button" style="background-color: rgba(0, 0, 0, 0.40); border: 1px solid #007bff; border-radius: 50%; color: white; font-family: 'Gilroy', sans-serif; font-size: 18px; width: 50px; height: 50px; margin: 10px 5px;">3</button>
+      <button class="pin-button" style="background-color: rgba(0, 0, 0, 0.40); border: 1px solid #007bff; border-radius: 50%; color: white; font-family: 'Gilroy', sans-serif; font-size: 18px; width: 50px; height: 50px; margin: 10px 5px;">6</button>
+      <button class="pin-button" style="background-color: rgba(0, 0, 0, 0.40); border: 1px solid #007bff; border-radius: 50%; color: white; font-family: 'Gilroy', sans-serif; font-size: 18px; width: 50px; height: 50px; margin: 10px 5px;">9</button>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center;">
+      <button class="pin-button" style="background-color: rgba(0, 0, 0, 0.40); border: 1px solid #007bff; border-radius: 50%; color: white; font-family: 'Gilroy', sans-serif; font-size: 18px; width: 50px; height: 50px; margin: 10px 5px;">CLR</button>
+      <button class="pin-button" style="background-color: rgba(0, 0, 0, 0.40); border: 1px solid #007bff; border-radius: 50%; color: white; font-family: 'Gilroy', sans-serif; font-size: 18px; width: 50px; height: 50px; margin: 10px 5px;">0</button>
+      <button class="pin-button" style="background-color: rgba(0, 0, 0, 0.40); border: 1px solid #007bff; border-radius: 50%; color: green; font-family: 'Gilroy', sans-serif; font-size: 18px; width: 50px; height: 50px; margin: 10px 5px;" value="confirm";>&#10004;</button>
+    </div>
+  </div>
+
+  <div style="margin-top: 20px; font-size: 10pt; font-family: 'Gilroy', sans-serif; text-align: center;">
+    <button class="forget-pin-button" style="background-color: black; border: 2px solid ivory; border-radius: 5px; color: ivory; font-family: 'Gilroy', sans-serif; font-size: 12px; padding: 5px 10px; width: 200px; margin: 0 auto;">Forget pin code</button>
+  </div>
+</div>
+<div id="select-screen" style="background: url('gradient.png'); background-size: cover; width: 100%; height: 100vh; justify-content: center; align-items: center; flex-direction: column; display: none;">
+  <div style="display: flex; justify-content: space-between; align-items: center; width: 90%;">    
+    <h2 style="font-family: 'Gilroy', serif; font-weight: bold; color: white;"><span id="mysettings3" style="font-size: 24px; cursor: pointer; margin-right: 10px;">⚙️</span>Rooms</h2>
+    <button id="enterchat" class="create-room-button" style="background-color: #3e65f5; border: 1px solid ivory; border-radius: 5px; color: white; font-family: 'Gilroy', sans-serif; font-size: 14px; padding: 10px 15px; cursor: pointer;">
+      <span>✍️ Create Room</span>
+    </button>
+  </div>
+
+  <input type="text" id="searchRoom" placeholder="&#128269;  Search Chats" style="background-color: rgba(0, 0, 0, 0.1); border: 1px solid white; color: white; border-radius: 5px; padding: 10px; width: 90%; margin-bottom: 20px;">
+
+  <div id="room-select" style="background-color: rgba(0, 0, 0, 0.5); padding: 10px; width: 90%; height: calc(100vh - 250px); overflow-y: auto; border-radius: 5px;">
+    </div>
+</div>
+<div id="create-screen" style="background: url('gradient.png'); background-size: cover; width: 100%; height: 100vh; justify-content: center; align-items: center; flex-direction: column; display: none;">
+  <div style="display: flex; justify-content: space-between; align-items: center; width: 90%;">
+    <h2 style="font-family: 'Gilroy', serif; font-weight: bold; color: white;">New Chat Room</h2>
+    <button class="close-button" id="closeCreate" style="background-color: transparent; border: 1px solid ivory; border-radius: 5px; color: white; font-family: 'Gilroy', sans-serif; font-size: 18px; padding: 5px 10px; cursor: pointer;">&#10005;</button>
+  </div>
+
+  <input type="text" id="roomNicknameInput" placeholder="&#x1F464;  Enter room nickname" style="color: white; background-color: rgba(0, 0, 0, 0.1); border: 1px solid #3e65f5; border-radius: 5px; padding: 10px; width: 90%; margin-bottom: 10px;">
+
+  <input type="text" id="publicKeyInput" placeholder="&#128270;  Their public key" style="color: white; background-color: rgba(0, 0, 0, 0.1); border: 1px solid #3e65f5; border-radius: 5px; padding: 10px; width: 90%; margin-bottom: 10px;">
+
+  <input type="password" id="aesPasswordInput" placeholder="&#128272;  AES Password (optional)" style="color: white; background-color: rgba(0, 0, 0, 0.1); border: 1px solid #3e65f5; border-radius: 5px; padding: 10px; width: 90%; margin-bottom: 10px;">
+
+  <p style="display: flex; justify-content: center; font-size: 12px; color: #ccc; margin-left: 40px; margin-right: 40px; word-wrap: pre-wrap;">Tip: Share your public key with users you want to chat with. Use their public key to create the chat room. Messages are only received when both parties are online.</p>
+
+  <div style="display: flex; justify-content: center; align-items: center;">
+      <p style="margin-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+          Your public key: 
+          <span id="pubInfo" style="margin-right: 10px;" value=""></span>
+          <button class="copy-button" id="copyPubkey" style="background-color: transparent; border: none; color: ivory; cursor: pointer; margin-left: 15px;">&#128203;</button>
+      </p>
+  </div>
+
+  <button class="create-room-button" id="createRoom" style="background-color: #3e65f5; border: none; border-radius: 5px; color: white; font-family: 'Gilroy', sans-serif; font-size: 18px; padding: 10px 20px; width: 90%; margin-top: 20px; cursor: pointer;">Create Room</button>
+</div>
+<div id="chat-screen" style="background: url('gradient.png'); background-size: cover; width: 100%; height: 100vh; justify-content: center; align-items: center; flex-direction: column; display: none;">
+  <div id="roomsetting" style="background-color: #111017; border-radius: 7px; padding: 10px; width: 95%; height: 3rem; display: flex; align-items: center; justify-content: space-between; top: 0; left: 50%; transform: translateX(-50%); position: fixed; z-index: 100;">
+    <span id="goback" class="material-symbols-outlined" style="flex: 0; cursor: pointer;"> ⬅️ </span>
+    <div id="roomtitle" style="font-family: 'Gilroy', sans-serif; font-weight: bold; color: white; flex-grow: 1; text-align: center; cursor: pointer;">
+      <span id="roomName">default</span>
+    </div>
+    <button id="returnToCallButton" class="phone-button" style="background-color: transparent; border: none; color: white; font-family: 'Gilroy', sans-serif; font-size: 18px; margin-left: 20px; cursor: pointer; display: none;">
+      Return To Call <span class="material-symbols-outlined">📞</span>
+    </button>
+    <span id="identicon" style="cursor: pointer;"></span>
+  </div>
+  <div id="messages" class="scrollable" style="background-color: #181818; border-radius: 5px; padding: 10px; width: 95%; height: calc(100vh - 100px); margin-top: 70px; overflow-y: auto;">
+  </div>
+
+  <div style="background-color: #282828; border-radius: 7px; padding: 10px; width: 95%; height: 50px; margin-bottom: 10px; display: flex; align-items: center;">
+    <button id="attach-image" class="attach-image-button" style="background-color: transparent; border: none; color: white; font-family: 'Gilroy', sans-serif; font-size: 18px; margin-right: 10px; cursor: pointer;">📎
+    </button>
+    <span id="emoji" class="emoji-click" style="cursor: pointer; padding-right: 10px;">😊</span>
+    <div class="custom-input" style="background-color: rgba(0, 0, 0, 0.1); border: 1px solid white; border-radius: 5px; padding: 10px; width: 75%; margin-right: 10px; color: ivory;">
+      <input type="text" class="emoji-placement" id="mymessage" style="background-color: transparent; color:lightgray; border: none; outline: none; width: calc(100% - 30px); /* Adjust 40px as needed */" placeholder="Message">      
+    </div>
+    <button id="sendbutton" style="background-color: #3e65f5; border: none; border-radius: 7px; color: white; font-family: 'Gilroy', sans-serif; font-size: 18px; padding: 10px 15px; cursor: pointer;">Send</button>
+    <button id="voice-call" class="phone-button" style="background-color: transparent; border: none; color: white; font-family: 'Gilroy', sans-serif; font-size: 18px; margin-left: 20px; cursor: pointer;">
+      <span class="material-symbols-outlined">📞</span>
+    </button>
+  </div>
+</div>
+
+<div id="info-screen" style="background: url('gradient.png'); background-size: cover; width: 100%; height: 100vh; justify-content: center; align-items: center; flex-direction: column; display: none;">
+<div style="display: flex; justify-content: space-between; align-items: center; width: 90%;">
+  <div style="display: flex; align-items: center;">
+    <h2 style="font-family: 'Gilroy', serif; font-weight: bold; color: white;margin-top: 10px;">Current Room</h2>
+    <span id="identicon2" style="margin-left: 10px;"></span>
+  </div>
+  <button class="close-button" id="closeInfo" style="background-color: transparent; border: 1px solid ivory; border-radius: 5px; color: white; font-family: 'Gilroy', sans-serif; font-size: 18px; padding: 5px 10px; cursor: pointer;">&#10005;</button>
+</div>
+
+  <p style="display: flex; justify-content: center; font-size: 12px; color: #ccc; margin-left: 40px; margin-right: 40px; word-wrap: pre-wrap;">Tip: Share your public key with users you want to chat with. Use their public key to create the chat room. Messages are only received when both parties are online.</p>
+  <div style="display: flex; justify-content: center; align-items: center;">
+      <p style="margin-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+          Room Name: 
+          <span id="nameInfo" style="margin-right: 10px;" value=""></span>
+      </p>
+  </div>
+  <div style="display: flex; justify-content: center; align-items: center;">
+      <p style="margin-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+          Room Hash: 
+          <span id="hashInfo" style="margin-right: 10px; font-size: 10;" value=""></span>
+          <button class="copy-button" id="copyHash" style="background-color: transparent; border: none; color: ivory; cursor: pointer; margin-left: 15px;">&#128203;</button>
+      </p>
+  </div>
+  <div style="display: flex; justify-content: center; align-items: center;">
+      <p style="margin-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+          Your public key: 
+          <span id="pubInfo3" style="margin-right: 10px;" value=""></span>
+          <button class="copy-button" id="copyPubkey3" style="background-color: transparent; border: none; color: ivory; cursor: pointer; margin-left: 15px;">&#128203;</button>
+      </p>
+  </div>
+  <div style="display: flex; justify-content: center; align-items: center;">
+      <p style="margin-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+          Their public key: 
+          <span id="pubInfo4" style="margin-right: 10px;" value=""></span>
+          <button class="copy-button" id="copyPubkey4" style="background-color: transparent; border: none; color: ivory; cursor: pointer; margin-left: 15px;">&#128203;</button>
+      </p>
+  </div>
+  <button id="removeChat" style=" cursor: pointer; border: 2px solid purple; background: black; color: white; padding: 10px 20px; font-family: 'Gilroy', sans-serif;">Remove Room</button>
+</div>
+
+<div id="call-screen" style="background: url('gradient.png'); background-size: cover; width: 100%; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; display: none;">
+    <!-- Back Button -->
+    <button id="backCallButton" style="align-self: flex-start; background: transparent; border: none; color: white; font-size: 24px; cursor: pointer;">⬅️</button>
+    
+    <!-- Call Name -->
+    <h1 id="callName" style="color: white; font-family: 'Gilroy', sans-serif; text-align: center;">Call Name</h1>
+    
+    <!-- Call Time -->
+    <p id="callTime" style="color: white; font-family: 'Gilroy', sans-serif; font-size: 18px;">00:00</p>
+    
+    <!-- Buttons for Mute, Audio, End Call -->
+    <div style="display: flex; justify-content: center; margin-top: 20px;">
+        <div style="text-align: center; margin: 0 20px;">
+            <button id="mute-call" style="background-color: rgba(220, 220, 220, 0.2); border: 2px solid white; border-radius: 50%; padding: 20px; cursor: pointer;">
+                <span style="font-size: 24px;">🎤</span>
+            </button>
+            <p id="mute-text"  style="color: white; font-family: 'Gilroy', sans-serif;">Mute</p>
+        </div>
+        
+        <div style="text-align: center; margin: 0 20px;">
+            <button id="audio-call" style="background-color: rgba(220, 220, 220, 0.2); border: 2px solid white; border-radius: 50%; padding: 20px; cursor: pointer;">
+                <span style="font-size: 24px;">🔊</span>
+            </button>
+            <p id="audio-text" style="color: white; font-family: 'Gilroy', sans-serif;">Audio</p>
+        </div>
+        
+        <div style="text-align: center; margin: 0 20px;">
+            <button id="end-call" style="background-color: red; border: none; border-radius: 50%; padding: 20px; cursor: pointer;">
+                <span style="font-size: 24px; color: white;">📞</span>
+            </button>
+            <p style="color: white; font-family: 'Gilroy', sans-serif;">End Call</p>
+        </div>
+    </div>
+</div>
+
+
+
+
+<div id="settings-screen" style="background: url('gradient.png'); background-size: cover; width: 100%; height: 100vh; display: none; flex-direction: column; justify-content: flex-start; align-items: center; overflow-y: auto; padding: 10px; box-sizing: border-box;">
+  <!-- Header Section -->
+  <div id="settingheader" style="background-color: #111017; border-radius: 7px; padding: 10px; width: 95%; display: flex; align-items: center; justify-content: space-between;">
+    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 10px;">
+      <span id="goback2" class="material-symbols-outlined" style="flex: 0; cursor: pointer; color: ivory;"> ⬅️ </span>
+      <h1 style="flex: 1; text-align: center; font-family: 'Gilroy', serif; margin: 0; color: ivory; font-size: 1.5rem;">Settings</h1>
+    </div>
+  </div>
+
+  <!-- Content Section -->
+  <div style="display: flex; flex-direction: column; align-items: center; width: 100%; padding: 20px;">
+  <div id="ldiv" style="display: none; flex-direction: column;">
+      <div style="display: flex; justify-content: center; align-items: center;">
+          <p style="margin-right: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              Your public key(share to connect): 
+              <span id="pubInfo2" style="margin-right: 10px;" value=""></span>
+              <button class="copy-button" id="copyPubkey2" style="background-color: transparent; border: none; color: ivory; cursor: pointer; margin-left: 15px;">&#128203;</button>
+          </p>
+      </div>
+      <div style="text-align: center; margin-top: 10px;"> <!-- Add margin if needed -->
+          <button id="logout" style="cursor: pointer; border: 2px solid purple; background: black; color: white; padding: 10px 20px; font-family: 'Gilroy', sans-serif;">Logout</button>
+           <button id="newPin" style="cursor: pointer; border: 2px solid purple; background: black; color: white; padding: 10px 20px; font-family: 'Gilroy', sans-serif;">Set Pin Code</button> 
+      </div>
+  </div>
+    <div><br></div>
+    <!-- Connection Strategy -->
+    <div style="width: 100%; text-align: center;">
+      <h3 style="font-family: 'Gilroy', sans-serif; color: ivory; font-size: 1.25rem;">Connection Strategy</h3>
+      <select id="strategy" style="width: 25%; padding: 10px; text-align: center;">
+        <option value="supabase">Supabase</option>
+        <option value="nostr">Nostr</option>
+        <option value="torrent">Torrent</option>
+        <option value="mqtt">MQTT</option>
+        <option value="ipfs">IPFS</option>
+        <option value="firebase">Firebase</option>
+        <option value="server">Custom Server</option>
+      </select>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 20px;">
+      <input 
+        type="text" 
+        id="database-url" 
+        placeholder="Database URL (currently set to default)" 
+        style="width: 70%; padding: 10px; border-radius: 25px; border: 2px solid purple; margin-bottom: 10px; font-family: 'Gilroy', sans-serif; color: black;"
+      />
+      <input 
+        type="text" 
+        id="api-key" 
+        placeholder="API Key (currently set to default)" 
+        style="width: 70%; padding: 10px; border-radius: 25px; border: 2px solid purple; font-family: 'Gilroy', sans-serif; color: black;"
+      />
+    </div>
+    <!-- WebRTC config file -->
+    <div style="width: 100%; text-align: center; margin-top: 20px;">
+      <h3 style="font-family: 'Gilroy', sans-serif; color: ivory; font-size: 1.25rem;">WebRTC Config File
+        <button id="configInfo" style="border: none; background: transparent; cursor: pointer; font-size: 18px; color: ivory;">❔</button>
+      </h3>
+      <button id="uploadThis" style=" cursor: pointer; border: 2px solid purple; background: black; color: white; padding: 10px 20px; font-family: 'Gilroy', sans-serif;">Upload</button>
+      <button id="resetThis" style=" cursor: pointer; border: 2px solid purple; background: black; color: white; padding: 10px 20px; font-family: 'Gilroy', sans-serif;">Reset Configuration</button>
+    </div>
+
+    <!-- Login private key complexity -->
+    <div style="width: 100%; text-align: center; margin-top: 20px;">
+      <h3 style="font-family: 'Gilroy', sans-serif; color: ivory; font-size: 1.25rem;">Login private key complexity (higher is more secure, lower is faster)</h3>
+      <select id="bits" style="width: 50%; padding: 10px; text-align: center;">
+        <option>512</option>
+        <option>1024</option>
+        <option>2048</option>
+      </select>
+    </div>
+
+    <!-- Checkboxes -->
+    <div style="width: 100%; text-align: center; margin-top: 20px;">
+      <label>
+        <input type="checkbox" id="image-links" checked> <span style="color: ivory;">Display images</span>
+      </label><br>
+      <label style="display: none;">
+        <input type="checkbox" id="image-compress" checked> <span style="color: ivory;">Compress images</span>
+      </label><br>
+      <label>
+        <input type="checkbox" id="showNotifications" checked> <span style="color: ivory;">Show notifications</span>
+      </label>
+    </div>
+
+    <!-- Backup and Restore buttons -->
+    <div style="width: 100%; text-align: center; margin-top: 20px;">
+      <button onclick="backupLocalStorage()" style="cursor: pointer; border: 2px solid purple; background: black; color: white; padding: 10px 20px; font-family: 'Gilroy', sans-serif;">Back up account database</button><br>
+      <button onclick="loadLocalStorage()" style="cursor: pointer; border: 2px solid purple; background: black; color: white; padding: 10px 20px; font-family: 'Gilroy', sans-serif; margin-top: 10px;">Restore account database</button>
+    </div>
+
+    <!-- Outro Information Div -->
+    <div id="Outro" class="myinfo scrollable" style="width: 80%; height: 800px; background: rgba(0, 0, 0, 0.25); color: ivory; border: 2px solid purple; border-radius: 10px; padding: 10px; margin-top: 20px;">
+      About the project:<br><br>
+      "Trust"ero uses the protocol of Trystero which is a purely front end JavaScript webRTC matchmaking system. This allows serverless peer to peer services. There is no external dependencies and no servers. This website can be downloaded from github and run completely static so that you
+      can audit and trust the code and fully eliminate the need for central servers making this a truly decentralized chat.
+      <br><br>
+      The chat rooms are completely private and password protected. They are generated based on the users public keys. All chats are encrypted using
+      RSA public key cryptography in addition to AES encryption. Therefore, the sender signs and encrypts the message. This allows the receiver to
+      verify that the sender is who he says he is and not someone pretending to be him. Also because it's encrypted only the receiver of a message is able to read it.
+      <br><br>
+      Users are able to alternate their connection strategies which lets them create their own private chat networks. In the case of Supabase or Firebase they could supply their own connection information. This helps peers find each other. If users struggle to connect to their peers that can be due to different challenges from the internet service provider throttling serverless peer to peer connections. However, this application also allows users to create their own relay server and share the configuration file with their friends so they can always experience high quality connections.
+      <br><br>
+      Want to test this for fun? Try opening up a second tab and joining a chat with yourself. RSA public key cryptography is rare among purely front end JavaScript projects. Also serverless architecture is usually complicated. However, this code shows how simple it can be thanks to Trystero and cryptographic libraries. Hopefully more projects will use this strategy to make safe and serverless web pages, games, and decentralized applications.<br><br>
+      <a href="https://github.com/trusterop2p/trustero" style="color: #998BCB">https://github.com/trusterop2p/trustero</a>
+      <br><br>
+    </div>
+
+  </div>
+</div>
+<script type="text/javascript">
+    document.querySelectorAll('.scrollable').forEach((scroller) => {
+        scroller.addEventListener('touchmove', function(e) {
+            e.stopPropagation();
+        }, { passive: false });
+    });
+    //For mobile try to disable overscroll so it doesn't refresh(can also handle in the service worker)
+    //Also, can compile as a TWA which uses chromium. Then to cover up the nav bar to prevent navigation, allow phone to draw over apps and make
+    //custom menu bar from there. Also it would need to persist in the background, get persistent storage, potentially have backup of storage
+    //if cache cleared so get storage permissions, get permissions for mic(for phone calls), in some cases get permission to stay in notification
+    //bar similar to apps like Element and of course send notifications. Lastly multiple connection strategies should be used in addition to
+    //multiple torrents as well as ipfs and firebase.
+    function backupLocalStorage() {
+        // Backup localStorage
+        const localStorageData = JSON.stringify(localStorage);
+        
+        // Backup IndexedDB
+        const indexedDBData = {};
+        const request = indexedDB.open('trusteroDB'); // Replace with your actual database name
+
+        request.onsuccess = function(event) {
+            const db = event.target.result;
+            const transaction = db.transaction(db.objectStoreNames, 'readonly');
+            
+            for (const storeName of db.objectStoreNames) {
+                const store = transaction.objectStore(storeName);
+                const getAllRequest = store.getAll();
+
+                getAllRequest.onsuccess = function() {
+                    indexedDBData[storeName] = getAllRequest.result;
+
+                    // Check if all stores have been processed
+                    if (Object.keys(indexedDBData).length === db.objectStoreNames.length) {
+                        const backupData = {
+                            localStorage: JSON.parse(localStorageData),
+                            indexedDB: indexedDBData
+                        };
+                        const blob = new Blob([JSON.stringify(backupData)], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+                        const anchor = document.createElement('a');
+                        anchor.href = url;
+                        anchor.download = window.prompt('Choose a file name for the backup:', 'backup.json');
+                        anchor.click();
+                        URL.revokeObjectURL(url);
+                    }
+                };
+            }
+        };
+
+        request.onerror = function(event) {
+            console.error('Error opening IndexedDB:', event.target.error);
+        };
+    }
+
+    function loadLocalStorage() {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            try {
+                const backupData = JSON.parse(event.target.result);
+                
+                // Restore localStorage
+                Object.keys(backupData.localStorage).forEach(function(key) {
+                    localStorage.setItem(key, backupData.localStorage[key]);
+                });
+                console.log('Local storage data restored.');
+
+                // Restore IndexedDB
+                const request = indexedDB.open('trusteroDB'); // Replace with your actual database name
+
+                request.onsuccess = function(event) {
+                    const db = event.target.result;
+                    const transaction = db.transaction(db.objectStoreNames, 'readwrite');
+
+                    for (const [storeName, data] of Object.entries(backupData.indexedDB)) {
+                        const store = transaction.objectStore(storeName);
+                        data.forEach(item => {
+                            store.put(item);
+                        });
+                    }
+                    console.log('IndexedDB data restored.');
+                };
+
+                request.onerror = function(event) {
+                    console.error('Error opening IndexedDB:', event.target.error);
+                };
+            } catch (error) {
+                console.error('Error parsing file data:', error);
+            }
+        };
+
+        reader.onerror = function(event) {
+            console.error('Error loading file:', event.target.error);
+        };
+
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+
+        input.onchange = function(event) {
+            const file = event.target.files[0];
+            reader.readAsText(file);
+        };
+        
+        // Trigger a click event on the input element to prompt the user to select a file
+        input.click();
+    }
+    var selfStream = '';
+    var callAudio = '';
+    var room = {};
+    var rooms = [];
+    var mymessages = {};
+    var currentroom = '';
+    const messagesDiv = document.getElementById('messages');
+    var myimage = false;
+</script>
+<script type="module">
+    //import {joinRoom, selfId} from './trystero-nostr.min.js';
+    function centerPopup() {
+        const popup = document.querySelector('.swal2-popup');
+        if (popup) {
+            const rect = popup.getBoundingClientRect();
+            const top = (window.innerHeight - rect.height) / 2;
+            const left = (window.innerWidth - rect.width) / 2;
+            popup.style.top = `${top}px`;
+            popup.style.left = `${left}px`;
+        }
+    }
+    Swal = Swal.mixin({
+        showClass: {
+            popup: '' // Disable show animation
+        },
+        hideClass: {
+            popup: '' // Disable hide animation
+        },
+        didOpen: () => {
+            // Call the center function when the popup opens
+            centerPopup();
+        }
+    });
+    var connectStrategy = localStorage.getItem("connectStrategy") || "torrent";
+    const fireBaseURL = localStorage.getItem("fireBaseURL") || "none";
+    const supaBaseURL = localStorage.getItem("supaBaseURL") || "https://cyiezatjolrcnizhzbxn.supabase.co";
+    const supaBaseAPI = localStorage.getItem("supaBaseAPI") || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5aWV6YXRqb2xyY25pemh6YnhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjcxNzU5OTksImV4cCI6MjA0Mjc1MTk5OX0.flHjQCJMbLTlfcXiVNLQOs1JHUtd9GAa-njz7Dp6c3o";
+    const serverURL = localStorage.getItem("serverURL") || "";
+    const serverAPI = localStorage.getItem("serverAPI") || "";
+    var supaBase = false;
+    var fireBase = false;
+    var server = false;
+    var blockChangeEvent = true;
+    let joinRoom;
+    let selfId;
+    async function loadModule() {
+      if (connectStrategy === "supabase") {
+        // Correct destructuring assignment
+        ({ joinRoom, selfId } = await import('./trystero-supabase.js'));
+        supaBase = true;
+        document.getElementById("strategy").value = "supabase";
+      } else if (connectStrategy === "firebase") {
+        if (fireBaseURL !== "none") {
+          fireBase = true;
+          ({ joinRoom, selfId } = await import('./firebase.js'));
+          document.getElementById("strategy").value = "firebase";
+        } else {
+          connectStrategy = "nostr";
+          ({ joinRoom, selfId } = await import('./nostr.js'));
+          document.getElementById("strategy").value = "nostr";
+        }
+      } else if (connectStrategy === "nostr") {
+        ({ joinRoom, selfId } = await import('./nostr.js'));
+        document.getElementById("strategy").value = "nostr"; // Use .value to set the value
+      } else if (connectStrategy === "mqtt") {
+        ({ joinRoom, selfId } = await import('./mqtt.js'));
+        document.getElementById("strategy").value = "mqtt";
+      } else if (connectStrategy === "ipfs") {
+        ({ joinRoom, selfId } = await import('./ipfs.js'));
+        document.getElementById("strategy").value = "ipfs";
+      } else if (connectStrategy === "torrent") {
+        ({ joinRoom, selfId } = await import('./torrent.js'));
+        document.getElementById("strategy").value = "torrent";
+      } else if (connectStrategy === "server") {
+        server=true;
+        document.getElementById("strategy").value = "server";
+      }
+      checkStrategySelect();
+    }
+    loadModule();
+    blockChangeEvent = false;
+    //import {iceServers}  from './config.js';
+    const closecreate = document.getElementById("closeCreate");
+    const letscreate = document.getElementById("createRoom");
+    const letschat = document.getElementById("enterchat");
+    const sendthis = document.getElementById("sendbutton");
+    const loginthis = document.getElementById("login");
+    const voicethis = document.getElementById("voice-call");
+    const endmycall = document.getElementById("end-call");
+    const imagethis = document.getElementById("image-links");
+    const compressthis = document.getElementById("image-compress");
+    const addImage = document.getElementById("attach-image");
+    var getMessage;
+    var sendMessage = {};
+    var peerInfo = 0;
+    var hashes = {}; //So that other nodes don't try to spam a message by replaying it.        
+    var visiblemessages = 0;
+    var intervalID;
+
+    async function checkAndRequestPermissions() {
+        var persistThis = false;
+        if ('storage' in navigator && 'estimate' in navigator.storage && persistThis) {
+            try {
+                const storageEstimate = await navigator.storage.estimate();
+                
+                // Check if usageDetails is available
+                if (storageEstimate.usageDetails && storageEstimate.usageDetails.persistentUsage > 0) {
+                    console.log('Persistent storage is already granted.');
+                } else {
+                    const granted = await navigator.storage.persist();
+                    
+                    if (granted) {
+                        console.log('Persistent storage is now granted.');
+                    } else {
+                        console.log('Persistent storage request was denied.');
+                    }
+                }
+            } catch (error) {
+                console.error('Error while checking/persisting storage:', error);
+            }
+        }
+
+        // Check if the browser supports the Notification API
+        if ('Notification' in window && navigator.serviceWorker) {
+            Notification.requestPermission().then(function(permission) {
+                if (permission === 'granted') {
+                  const showThis = localStorage.getItem('notificationShown') != 'true';
+                  if (showThis) {
+                    showNotification("Permission granted.", "Trustero may now send notifications");
+                    localStorage.setItem('notificationShown', 'true');
+                  }
+                } else {
+                    console.log("Notification permission denied.");
+                }
+            });
+        }
+    }
+
+    function showNotification(notifyTitle, notifyMessage) {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        // Create a notification
+        try {
+          const notification = new Notification(notifyTitle, {
+            body: notifyMessage,
+            icon: '/logo.png'
+          });
+
+          // Handle click on the notification (optional)
+          notification.onclick = function() {
+            // Perform an action when the notification is clicked
+          };
+        } catch {          
+        }
+      }
+    }
+    
+    // Call the function
+    window.onload = async function() {
+        await checkAndRequestPermissions();
+        await checkPin();
+    }
+    //Note: testing this with two tabs on the same LAN in Firefox using a VPN may have errors with stun server. Use Chromium to test instead.
+    document.onkeydown = function (e) {
+        rng_seed_time();
+        rand=Crypto.SHA256(rand + Math.floor(Date.now()) + event.clientX + event.clientX + Math.random() + e);
+    }
+    async function checkImage(url){
+         const res = await fetch(url);
+         const buff = await res.blob();
+         return {'blob':res.blob, 'result':buff.type.startsWith('image/')};
+    }
+    loginthis.addEventListener('click', async function() {
+        await login();
+    });
+    function openDatabase() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open('trusteroDB', 1);
+
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                // Create an object store named 'messagesStore' if it doesn't already exist
+                if (!db.objectStoreNames.contains('messagesStore')) {
+                    db.createObjectStore('messagesStore', { keyPath: 'key' });
+                }
+            };
+
+            request.onsuccess = (event) => {
+                resolve(event.target.result);
+            };
+
+            request.onerror = () => reject('Database error');
+        });
+    }
+
+    function getMessagesFromIndexedDB(publicKey) {
+        return openDatabase().then((db) => {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction('messagesStore', 'readwrite'); // Use 'readwrite' to allow adding messages
+                const store = transaction.objectStore('messagesStore');
+                const getRequest = store.get(publicKey); // Retrieve messages using publicKey as the key
+
+                getRequest.onsuccess = () => {
+                    const result = getRequest.result;
+
+                    if (result) {
+                        // If messages exist, resolve with the retrieved messages
+                        resolve(result);
+                    } else {
+                        // If no messages exist, create a new entry
+                        const newMessage = { key: publicKey, messages: [] }; // Create a new entry with an empty messages array
+                        const addRequest = store.add(newMessage); // Add the new entry
+
+                        addRequest.onsuccess = () => {
+                            resolve(newMessage); // Resolve with the new entry
+                        };
+                        addRequest.onerror = () => reject('Error adding new messages entry');
+                    }
+                };
+
+                getRequest.onerror = () => reject('Error fetching messages');
+            });
+        });
+    }
+    function addMessageToIndexedDB(publicKey, message) {
+        const request = indexedDB.open('trusteroDB', 1);
+        request.onsuccess = (event) => {
+            const db = event.target.result;
+            const transaction = db.transaction('messagesStore', 'readwrite'); // Replace 'messagesStore' with your object store name
+            const store = transaction.objectStore('messagesStore');
+            store.put({ key: publicKey, message }); // Assume messages are stored as objects with key and message
+        };
+        request.onerror = () => console.error('Database error');
+    }
+    //Some extra and useful crypto libraries were loaded, however only some of them are used.
+    var privatekey = '';
+    var publickey = '';
+    var theirpublickey = {};
+    var RSAKeys = '';
+    var AESkey = {};
+    var loadimages = true;
+    var rand = Crypto.SHA256(Math.random());
+    var oncall = '';
+    var mynotifications = {};
+    var otherkey = '';
+    const pinPasswordInput = document.getElementById('pin-password');
+    const pinButtons = document.querySelectorAll('.pin-button');
+    const forgetPinButton = document.querySelector('.forget-pin-button');
+    var loggedPin = "false";
+
+    pinButtons.forEach(button => {
+      button.addEventListener('click', async () => {
+        const pinValue = button.textContent;
+        if (pinValue === 'CLR') {
+          pinPasswordInput.value = '';
+        } else if (!isNaN(parseInt(pinValue))) {
+          pinPasswordInput.value += pinValue;
+        } else {
+          const havePin = localStorage.getItem("setPin") || "false";
+          if(havePin == "false") {
+            localStorage.setItem("setPin", Crypto.SHA256(pinPasswordInput.value));
+            const encrypted = CryptoJS.AES.encrypt(keysave, Crypto.SHA256(pinPasswordInput.value)).toString();
+            localStorage.setItem("pinKey", encrypted);            
+            Swal.fire("Pin saved");
+            show("pin-screen", "none");
+            show("select-screen");
+          } else {
+            if(Crypto.SHA256(pinPasswordInput.value) != havePin) {
+              const confirmation = await Swal.fire({
+                title: 'Incorrect Pin',
+                text: "Please try again",
+                showCancelButton: false,
+                confirmButtonText: 'OK'
+              });
+              loggedPin = "false";
+              return;
+            } else {
+              loggedPin = "true";
+              const myencrypted = localStorage.getItem("pinKey") || "false";
+              if(myencrypted != "false") {
+                const mykey = CryptoJS.AES.decrypt(myencrypted, Crypto.SHA256(pinPasswordInput.value)).toString(CryptoJS.enc.Utf8);
+                show("pin-screen", "none");
+                await login(mykey);                
+              } else {
+                Swal.fire("Pin retreival failed");
+                localStorage.setItem("setPin", "false");
+                localStorage.setItem("pinKey", "false");
+                show("login-screen");
+                show("pin-screen","none");
+              }
+            }
+          }          
+        }
+      });
+    });
+
+    forgetPinButton.addEventListener('click', () => {
+      localStorage.setItem("setPin", "false");
+      localStorage.setItem("pinKey", "false");
+      show("login-screen");
+      show("pin-screen","none");
+    });
+    function show(divname, showThis="flex") {
+      if(showThis !="flex") {
+        document.getElementById(divname).style.display = "none";;
+      } else {
+        document.getElementById(divname).style.display = "flex";
+      }      
+    }
+    document.getElementById("roomtitle").addEventListener('click', () => {
+      showInfo();
+    });
+    document.getElementById("identicon").addEventListener('click', () => {
+      showInfo();
+    });
+    document.getElementById("mysettings1").addEventListener('click', () => {
+      thesettings(0);
+    });
+    document.getElementById("mysettings2").addEventListener('click', () => {
+      thesettings(1);
+    });
+    document.getElementById("mysettings3").addEventListener('click', () => {
+      thesettings(2);
+    });
+    document.getElementById("goback2").addEventListener('click', () => {
+      settingsBack();
+    });
+    document.getElementById("configInfo").addEventListener('click', async () => {
+      await Swal.fire({
+          title: 'Config file',
+          html: `
+              <div style="max-width: 500px; text-align: left;">
+                  <p>You are able to upload a WebRTC configuration file in the standard format shown at this link: 
+                  <a href="https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/RTCPeerConnection" target="_blank">MDN Web Docs</a>.</p>
+                  <p>This will help improve your ability to connect. Here is an example of a config file:</p>
+                  <pre style="background-color: #f4f4f4; padding: 10px; border-radius: 5px; max-height: 250px;">
+var RTCConfiguration = {
+  iceServers: [
+    {
+      urls: "stun:stun.relay.metered.ca:80"
+    },
+    {
+      urls: "turn:global.relay.metered.ca:80", // TURN over UDP
+      username: "your-username",
+      credential: "your-credentials"
+    },
+    {
+      urls: "turn:global.relay.metered.ca:80?transport=tcp", // TURN over TCP
+      username: "your-username",
+      credential: "your-credentials"
+    },
+    {
+      urls: "turn:global.relay.metered.ca:443", // TURN over TLS
+      username: "your-username",
+      credential: "your-credentials"
+    },
+    {
+      urls: "turns:global.relay.metered.ca:443?transport=tcp", // TURN over TCP
+      username: "your-username",
+      credential: "your-credentials"
+    },
+    {
+      urls: "stun:global.stun.twilio.com:3478"
+    },
+    {
+      urls: "stun:stun.l.google.com:19302"
+    }
+  ],
+  iceTransportPolicy: 'all',
+  bundlePolicy: 'balanced',
+  rtcpMuxPolicy: 'require',
+  sdpSemantics: 'unified-plan',
+  iceCandidatePoolSize: 5
+};
+                  </pre>
+              </div>
+          `,
+          showCancelButton: false,
+          confirmButtonText: 'OK',
+          width: 'auto', // Automatically adjusts the width based on content
+      });
+    });
+
+    function checkStrategySelect() {
+      var selection = document.getElementById("strategy").value;
+      var myURL = document.getElementById("database-url");
+      var myAPI = document.getElementById("api-key");
+      myAPI.style.display = "none";
+      if(selection == "supabase" || selection == "firebase" || selection == "server") {
+        myURL.style.display = "flex";
+        myURL.style.justifyContent = "center";
+        if(selection == "supabase" || selection == "server") {
+          myAPI.style.display = "flex";
+          myAPI.style.align = "center";
+        }
+        myURL.value = "";
+        myAPI.value = "";
+        if(selection == "firebase") {
+          if(fireBaseURL != 'none') {
+            myURL.value = fireBaseURL;
+          }
+        }
+        if(selection == "supabase") {
+          myURL.value = supaBaseURL;
+          myAPI.value = supaBaseAPI;
+        }
+        if(selection == "server") {
+          myURL.value = serverURL;
+          myAPI.value = serverAPI;
+        }
+      } else {
+        myURL.style.display = "none";
+      }
+    }
+    var refreshThis = 0;
+    document.getElementById("strategy").addEventListener('change', () => {
+      checkStrategySelect();
+      if(!blockChangeEvent) {
+        refreshThis = 1;
+      }
+    });
+    var previousPage = 0;
+    function thesettings(prevpage=0) {
+      previousPage = prevpage;
+      if(previousPage == 0) {
+        show("login-screen", "none");
+        show("settings-screen"); 
+      } else if(previousPage == 1) {
+        show("pin-screen", "none");
+        show("settings-screen");
+      } else {
+        show("select-screen", "none");
+        show("settings-screen");
+      }
+    }
+    async function settingsBack() {
+      if(refreshThis == 1) {
+        var selection = document.getElementById("strategy").value;
+        var myURL = document.getElementById("database-url").value;
+        var myAPI = document.getElementById("api-key").value;
+        if(selection == "supabase") {
+          if(myURL != '' && myAPI != '') {
+            localStorage.setItem("supaBaseURL", myURL)
+            localStorage.setItem("supaBaseAPI", myAPI)
+          } else {
+            localStorage.setItem("supaBaseURL", "https://cyiezatjolrcnizhzbxn.supabase.co");
+            localStorage.setItem("supaBaseAPI", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN5aWV6YXRqb2xyY25pemh6YnhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjcxNzU5OTksImV4cCI6MjA0Mjc1MTk5OX0.flHjQCJMbLTlfcXiVNLQOs1JHUtd9GAa-njz7Dp6c3o");
+          }
+        }
+        if(selection == "firebase") {
+          if(myURL != '') {
+            localStorage.setItem("fireBaseURL", myURL)
+          } else {
+            await Swal.fire("Please enter a valid URL for Firebase");
+            return
+          }
+        }
+        if(selection == "server") {
+          if(myURL != '' && myAPI != '') {
+            localStorage.setItem("serverURL", myURL)
+            localStorage.setItem("serverAPI", myAPI)
+          } else {
+            await Swal.fire("Please enter a valid URL and API key");
+            return
+          }
+        }
+        localStorage.setItem("connectStrategy", selection)
+        location.reload();
+      }
+      if(previousPage == 0) {
+        show("settings-screen", "none"); 
+        show("login-screen");        
+      } else if(previousPage == 1) {
+        show("settings-screen", "none");
+        show("pin-screen");        
+      } else {
+        show("settings-screen", "none");
+        show("select-screen");        
+      }
+    }
+    async function checkPin() {
+      const havePin = localStorage.getItem("setPin") || "false";
+      if(havePin != "false") {
+        show("login-screen","none");
+        show("pin-screen");
+      }
+    }
+    document.getElementById("goback").addEventListener('click', () => {
+      show("select-screen");
+      show("chat-screen", "none");
+    });
+    async function showInfo() {
+      show("chat-screen", "none");
+      show("info-screen");
+    }
+    document.getElementById("closeInfo").addEventListener('click', () => {
+      show("info-screen", "none");
+      show("chat-screen");
+    });
+    new EmojiPicker({
+      trigger: [
+        {
+          selector: '#emoji',
+          insertInto: '.emoji-placement'
+        }
+      ],
+      closeButton: true,
+      //specialButtons: green
+    });
+    document.getElementById('emoji').addEventListener('click', () => {
+      // Wait for the emoji picker to render and then position it
+      setTimeout(() => {
+        const emojiContainer = document.querySelector('.fg-emoji-container');
+        emojiContainer.style.position = 'fixed';
+        emojiContainer.style.top = '15px';
+        emojiContainer.style.left = '15px';
+        emojiContainer.style.zIndex = '9999';
+      }, 100); // Adjust the timeout as needed
+    });
+    var keysave = "";
+    async function login(mykey = "") {
+        if(mykey == "") {
+          var user = Crypto.SHA256(document.getElementById("username").value);
+          var password = Crypto.SHA256(document.getElementById("password").value);
+          document.getElementById("username").value = '';
+          document.getElementById("password").value = '';
+          mykey = Crypto.SHA256(user + password);
+        }
+        if(intervalID) {
+          try {
+            clearInterval(intervalID);
+          } catch {
+          }
+        }
+        var mybits = parseInt(document.getElementById("bits").value);
+        otherkey = Crypto.SHA256(mykey);
+        RSAKeys = cryptico.generateRSAKey(Crypto.SHA256(mykey), mybits);
+        publickey = cryptico.publicKeyString(RSAKeys);
+        const havePin = localStorage.getItem("setPin") || "false";
+        if(havePin == "false") {
+          const showPin = localStorage.getItem(publickey + ":showPin") || "true";
+          if(showPin == "true") {
+            const confirmation = await Swal.fire({
+              title: 'Pin code',
+              text: "Would you like to set a pin code? It is slightly less secure however it allows for faster login.",
+              showCancelButton: true,
+              confirmButtonText: 'Yes',
+              cancelButtonText: 'No',
+            });
+            if (confirmation.isConfirmed) {
+              show("login-screen","none");
+              show("pin-screen");
+              keysave = mykey;
+            } else {
+              localStorage.setItem(publickey + ":showPin", "false");
+              show("login-screen","none");
+              show("select-screen");
+            }
+          } else {
+            show("login-screen","none");
+            show("select-screen");
+          }
+        } else {
+          show("select-screen");
+        }
+        document.getElementById("ldiv").style.display = "flex";
+        document.getElementById("pubInfo").value = publickey;
+        document.getElementById("pubInfo").innerHTML = publickey.length > 10 ? publickey.substring(0, 10) + "..." : publickey;
+        document.getElementById("pubInfo2").value = publickey;
+        document.getElementById("pubInfo2").innerHTML = publickey.length > 10 ? publickey.substring(0, 10) + "..." : publickey;
+        document.getElementById("pubInfo3").value = publickey;
+        document.getElementById("pubInfo3").innerHTML = publickey.length > 10 ? publickey.substring(0, 10) + "..." : publickey;
+        rooms = JSON.parse(localStorage.getItem(publickey + ":rooms")) || [];
+        mynotifications = JSON.parse(localStorage.getItem(publickey + ":mynotifications")) || {};
+        //mymessages = JSON.parse(localStorage.getItem(publickey + ":messages")) || {};
+        try {
+          var messages = await getMessagesFromIndexedDB(publickey);
+          mymessages = messages['message'] || {};
+          if(server) {            
+          } else {
+            sendUnreadMessages();
+          }
+        } catch(error) {
+          console.log(error);
+          showNotification("Error", error);
+        };
+        roomselect(1);
+        if(server) {
+          startMessageChecker();
+        }
+    }
+    function roomselect(firsttime=0) {
+      const roomList = document.getElementById("room-select");
+      roomList.innerHTML = ""; // Clear the room list
+
+      rooms = JSON.parse(localStorage.getItem(publickey + ":rooms")) || []; // Get rooms from localstorage or use an empty array if none are found
+
+      if (rooms.length === 0) {
+        const noRoomsElement = document.createElement("p");
+        noRoomsElement.textContent = "No rooms found";
+        roomList.appendChild(noRoomsElement);
+        return;
+      }
+
+      rooms.forEach((myroom) => {
+        const sharedKey = Object.keys(myroom)[0];
+
+        // Create the room element as a flex container
+        const roomElement = document.createElement("div");
+        roomElement.classList.add("room-item"); // Add a class for styling
+        roomElement.style.display = "flex"; // Use flexbox for layout
+        roomElement.style.alignItems = "center"; // Center items vertically
+        roomElement.style.justifyContent = "space-between"; // Space between elements
+        roomElement.style.padding = "10px"; // Add some padding for aesthetics
+
+        // Jdenticon for shared key
+        const jdenticonElement = document.createElement("span");
+        // Generate Jdenticon here based on sharedKey (you'll need a Jdenticon library)
+        jdenticonElement.classList.add("jdenticon"); // Add a class for styling
+        const svgString = jdenticon.toSvg(sharedKey, 25);
+        const base64String = btoa(svgString);
+        let dataUrl = `data:image/svg+xml;base64,${base64String}`;
+        jdenticonElement.innerHTML = '<img src="' + dataUrl + '" width="25" height="25">';
+        roomElement.appendChild(jdenticonElement);
+
+        // Room name
+        const roomNameElement = document.createElement("h3");
+        roomNameElement.textContent = myroom[sharedKey].name;
+        roomNameElement.style.fontFamily = "Gilroy"; // Set font family
+        roomNameElement.style.fontSize = "12px";
+        roomNameElement.style.margin = "0 15px"; // Add horizontal margin
+        roomNameElement.style.color = "lightgray";
+        roomElement.appendChild(roomNameElement);
+
+        // Create a wrapper for chat text to center it
+        const chatWrapper = document.createElement("div");
+        chatWrapper.style.flexGrow = "1"; // Allow it to take available space
+        chatWrapper.textContent = getLastMessage(sharedKey);
+        chatWrapper.style.fontFamily = "Gilroy"; // Set font family
+        chatWrapper.style.fontSize = "11px";
+        chatWrapper.style.textAlign = "center"; // Center the text
+        const chatTextElement = document.createElement("div");
+        chatTextElement.id = sharedKey; // Set ID for adding text
+        chatWrapper.appendChild(chatTextElement); // Add chat text to the wrapper
+        roomElement.appendChild(chatWrapper); // Append wrapper to room element
+
+        // Status indicator (bell icon)
+        const statusElement = document.createElement("span");
+        statusElement.id = sharedKey + "-status";
+        statusElement.style.color = "ivory";
+        if (mynotifications[sharedKey] === 1) {
+          statusElement.innerHTML = "🔔";
+        }
+        statusElement.style.marginLeft = "15px"; // Margin for spacing
+        roomElement.appendChild(statusElement); // Append status element
+
+        // Create a new div for the separator
+        const separatorWrapper = document.createElement("div");
+        separatorWrapper.style.width = "75%"; // Set desired width for the separator
+        separatorWrapper.style.margin = "10px auto"; // Center the separator wrapper in the parent container
+
+        const separator = document.createElement("div");
+        separator.style.background = "ivory"; // Set the background color for the line
+        separator.style.height = "2px"; // Set the height for the line
+        separator.style.opacity = 0.10; // Set opacity for transparency
+        separator.style.margin = "5px 0"; // Margin above and below
+
+        separatorWrapper.appendChild(separator); // Append the separator to the wrapper
+
+        // Append room elements and separator as needed
+        roomList.appendChild(roomElement); // Append room element to the parent container
+        roomList.appendChild(separatorWrapper); // Append the separator wrapper below the room element
+
+        if(firsttime == 1) {      
+          currentroom = sharedKey;
+          if (!mymessages.hasOwnProperty(sharedKey)) {
+            mymessages[currentroom] = [];
+          }
+          const myroom1 = rooms.find(myroom => Object.keys(myroom)[0] === sharedKey);
+          theirpublickey[currentroom] = myroom1[currentroom].theirpublickey;
+          AESkey[currentroom] = myroom1[currentroom].AES;
+          window.globalConfigFile = RTCConfiguration;
+          try {
+            if(server) {
+              room[currentroom] = {'myroom':currentroom};
+            } else {
+              if(supaBase) {
+                joinThis({rtcConfig: RTCConfiguration, appId: supaBaseURL, supabaseKey: supaBaseAPI, password: myroom1[currentroom].AES}, currentroom);
+              } else if(fireBase) {
+                joinThis({rtcConfig: RTCConfiguration, appId: fireBaseURL, password: myroom1[currentroom].AES}, currentroom);
+              } else {
+                joinThis({rtcConfig: RTCConfiguration, appId: 'Trustero', password: myroom1[currentroom].AES}, currentroom);
+              }
+            }
+          } catch (e) {
+            console.log(e);
+            Swal.fire({
+                title: 'Connection failed',
+                text: 'Joining room failed. Please check your connection strategy and refresh the page',
+                showCancelButton: false,
+                confirmButtonText: 'OK'
+            });
+          }
+        }
+        // Make the room element clickable
+        roomElement.addEventListener("click", () => {
+          const selectedRoom = rooms.find(myroom => Object.keys(myroom)[0] === sharedKey);
+          show("select-screen", "none");
+          show("chat-screen");
+          showroom(selectedRoom); // Call the showroom function
+          
+          // Update notification status (if applicable)
+          if (mynotifications[sharedKey] === 1) {
+            statusElement.innerHTML = "";
+            delete mynotifications[sharedKey];
+            localStorage.setItem(publickey + ":mynotifications", JSON.stringify(mynotifications));
+          }
+        });
+      });
+    }
+    async function showroom(myroom1) {
+        if (typeof myroom1 === "undefined") {
+            return;
+        }        
+        currentroom = Object.keys(myroom1)[0];
+        if (!mymessages.hasOwnProperty(currentroom)) {
+          mymessages[currentroom] = [];
+        }
+        document.getElementById("roomName").innerHTML = myroom1[currentroom].name;
+        const svgString = jdenticon.toSvg(currentroom, 30);
+        const base64String = btoa(svgString);
+        let dataUrl = `data:image/svg+xml;base64,${base64String}`;
+        document.getElementById("identicon").innerHTML = '<img src="' + dataUrl + '" width="30" height="30">';
+        document.getElementById("identicon2").innerHTML = '<img src="' + dataUrl + '" width="30" height="30">';
+        document.getElementById("mymessage").value = "";
+        document.getElementById("messages").innerHTML = "";
+        visiblemessages = 0;
+        await populateMessages();
+        theirpublickey[currentroom] = myroom1[currentroom].theirpublickey;
+        console.log(theirpublickey[currentroom])
+        document.getElementById("pubInfo4").value = theirpublickey[currentroom];
+        document.getElementById("pubInfo4").innerHTML = theirpublickey[currentroom].length > 10 ? theirpublickey[currentroom].substring(0, 10) + "..." : theirpublickey[currentroom];
+        document.getElementById("hashInfo").value = currentroom;
+        document.getElementById("hashInfo").innerHTML =  currentroom.length > 10 ? currentroom.substring(0, 10) + "..." : currentroom;
+        document.getElementById("nameInfo").innerHTML = myroom1[currentroom].name;        
+        AESkey[currentroom] = myroom1[currentroom].AES;
+        window.globalConfigFile = RTCConfiguration;
+        try {
+          if(server) {
+            room[currentroom] = {'myroom':currentroom};
+          } else {
+            if(supaBase) {
+              joinThis({rtcConfig: RTCConfiguration, appId: supaBaseURL, supabaseKey: supaBaseAPI, password: myroom1[currentroom].AES}, currentroom);
+            } else if(fireBase) {
+              joinThis({rtcConfig: RTCConfiguration, appId: fireBaseURL, password: myroom1[currentroom].AES}, currentroom);
+            } else {
+              joinThis({rtcConfig: RTCConfiguration, appId: 'Trustero', password: myroom1[currentroom].AES}, currentroom);
+            }
+          }
+        } catch (e) {
+          console.log(e)
+          await Swal.fire({
+              title: 'Connection failed',
+              text: 'Joining room failed. Please check your connection strategy and refresh the page',
+              showCancelButton: false,
+              confirmButtonText: 'OK'
+          });
+        }
+        //const rtcConfig = {
+        //    iceServers: iceServers,
+        //    iceCandidatePoolSize: 10,
+        //    iceTransportPolicy: 'all',
+        //    bundlePolicy: 'max-bundle',
+        //    rtcpMuxPolicy: 'require',
+        //    sdpSemantics: 'unified-plan'
+        //};
+        //const customConfig = {
+        //    appId: 'Trustero', 
+        //    password: myroom1[currentroom].AES,
+        //    rtcConfig: rtcConfig
+        //}
+        //joinThis(customConfig, currentroom);
+        notify("Joined Room - " + Object.keys(myroom1)[0]);
+    }
+
+    sendthis.addEventListener('click', async function() {
+        await makeMessage();
+    })
+    document.getElementById("mymessage").addEventListener("keypress", function(event) {
+      if (event.key === "Enter") {
+        makeMessage();
+      }
+    });
+    if(localStorage.getItem("RTCConfiguration") && localStorage.getItem("RTCConfiguration") != "") {
+      RTCConfiguration = JSON.parse(localStorage.getItem("RTCConfiguration"));
+    }
+    function cleanJSON(content) {
+        // Remove single-line comments (//)
+        content = content.replace(/\/\/.*$/gm, '');        
+        // Remove multi-line comments (/* ... */)
+        content = content.replace(/\/\*[\s\S]*?\*\//gm, '');        
+        // Remove carriage returns (\r)
+        content = content.replace(/\r/g, '');
+        // Remove newline characters (\n)
+        content = content.replace(/\n/g, '');
+        // Remove excess spaces between JSON keys/values
+        content = content.replace(/\s+/g, ' ').trim();
+        // Fix quotes
+        content = content.replace(/'/g, '"');
+        return content.trim();
+    }
+    document.getElementById("logout").addEventListener("click", function(event) {
+      location.reload();
+    });
+    document.getElementById("newPin").addEventListener("click", function(event) {
+      localStorage.setItem(publickey + ":showPin", "true");
+      location.reload();
+    });
+    document.getElementById("resetThis").addEventListener("click", function(event) {
+      localStorage.setItem("RTCConfiguration", "");
+      location.reload();
+    });
+    document.getElementById("uploadThis").addEventListener("click", function(event) {
+      // Create file input element dynamically
+      const fileInput = document.createElement("input");
+      fileInput.type = "file";      
+      // Add event listener for file selection
+      fileInput.addEventListener("change", function() {
+        const file = fileInput.files[0];
+        if (file) {
+          const reader = new FileReader();
+
+          reader.onload = function(event) {
+            const fileContent = event.target.result;
+            try {
+              // Extract the part after the first '{'
+              let jsonStart = fileContent.indexOf('{');
+              let jsonPart = fileContent.slice(jsonStart);  // Get everything from the first '{'
+
+              // Find the position of the last '}'
+              let jsonEnd = jsonPart.lastIndexOf('}');
+              if (jsonEnd === -1) {
+                throw new Error("No closing brace '}' found.");
+              }
+
+              // Extract the JSON substring
+              let jsonContent = jsonPart.slice(0, jsonEnd + 1);
+
+              // Parse the extracted JSON
+              const tempvar = eval(`({ result: ${jsonContent} })`).result;
+              const parsedConfig = JSON.parse(JSON.stringify(tempvar));
+
+              // Store the configuration in localStorage and set global variables
+              localStorage.setItem("RTCConfiguration", JSON.stringify(parsedConfig));
+              window.globalConfigFile = parsedConfig;
+              RTCConfiguration = parsedConfig;
+              Swal.fire("Success", "RTCConfiguration loaded successfully!", "success");
+            } catch (error) {
+              Swal.fire("Error", "Error parsing RTCConfiguration: " + error.message, "error");
+              console.error("Error parsing RTCConfiguration:", error);
+            }
+          };
+
+          // Read the file as text
+          reader.readAsText(file);
+        } else {
+          Swal.fire("Error", "No file selected.", "error");
+          console.error("No file selected.");
+        }
+      });
+
+      // Programmatically trigger the file input click
+      fileInput.click();
+    });
+    document.getElementById("backCallButton").addEventListener('click', async function() {
+        show("call-screen", "none");
+        show("chat-screen");
+    });
+    document.getElementById("returnToCallButton").addEventListener('click', async function() {
+        show("chat-screen", "none");
+        show("call-screen");
+    });
+    voicethis.addEventListener('click', async function() {
+        if(server) {
+          await Swal.fire("This option is not available for the server connection method.");
+          return;
+        }
+        show("chat-screen", "none");
+        show("call-screen");
+        await voicecall(currentroom);
+    })
+    imagethis.addEventListener('click', function() {
+        loadimages = imagethis.checked;
+    })
+    endmycall.addEventListener('click', async function() {
+        show("call-screen", "none");
+        show("chat-screen");
+        await endcall(oncall, 0);
+    })
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function hashObject(obj) {
+      return Crypto.SHA256(Object.keys(obj).sort().map(key => Crypto.SHA256(key + obj[key])).join('')).toString();
+    }
+
+    function hexlify(str) {
+        let hexStr = '';
+        for (let i = 0; i < str.length; i++) {
+            hexStr += str.charCodeAt(i).toString(16).padStart(2, '0'); // Convert each character to hex
+        }
+        return hexStr;
+    }
+
+    let checkInterval = [15,15,15,15,30,30,30,30,60,60,120,120,240,240,480,480,960]; // Global interval in seconds
+    let intervalPos = 0;
+    let checkerRunning = false;
+
+    async function messageCheckLoop() {
+      if (checkerRunning) return; // prevent duplicate loops
+      checkerRunning = true;
+
+      while (true) {
+        console.log("Checking messages: " + checkInterval[intervalPos]);        
+        try {
+          const response = await serverRequest("getMessages");
+          if (response == "error") {
+            throw new Error("Error checking messages");
+          }
+          const readSent = JSON.parse(localStorage.getItem(publickey + ":readSent")) || { 'readSent': {} };
+          let changedThis = 0;
+
+          for (const mykey in response['readSent']) {
+            if (response['readSent'].hasOwnProperty(mykey)) {
+              if (response['readSent'][mykey] != "") {
+                if (!(mykey in readSent) || response['readSent'][mykey] != readSent[mykey]) {
+                  for (let roomX in mymessages) {
+                    if (!(roomX.endsWith("unread"))) {
+                      let startedThis = false;
+                      for (let i = 0; i < mymessages[roomX].length; i++) {
+                        let messageData = mymessages[roomX][i];
+                        if (messageData.sent != 1) {
+                          continue;
+                        }
+                        try {
+                          if (messageData.peerInfo > 0) break;
+                          if (messageData.msgID == response['readSent'][mykey]) {
+                            startedThis = true;
+                          }
+                          if (startedThis) {
+                            mymessages[roomX][i].peerInfo = 1;
+                            changedThis = 1;
+                          }
+                        } catch (e) {
+                          console.log(e);
+                        }
+                      }
+                    }
+                  }
+                  readSent[mykey] = response['readSent'][mykey];
+                }
+              }
+            }
+          }
+
+          localStorage.setItem(publickey + ":readSent", JSON.stringify(readSent));
+
+          if ("messages" in response && response.messages.length > 0) {
+            intervalPos = 0;
+            for (let i = 0; i < response.messages.length; i++) {
+              await showMessage(response.messages[i][0], response.messages[i][1]);
+            }
+          }
+
+          if (changedThis == 1) {
+            document.getElementById("messages").innerHTML = "";
+            await populateMessages();
+          }
+
+        } catch (error) {
+          console.error("Error during message check:", error);
+        }        
+        // Wait for the next interval dynamically
+        await new Promise(resolve => setTimeout(resolve, checkInterval[intervalPos] * 1000));
+        if(intervalPos + 1 < checkInterval.length) {
+          intervalPos += 1;
+        }
+      }
+    }
+
+    function startMessageChecker() {
+      messageCheckLoop();
+      console.log(`Message checker started. It will poll every 'checkInterval' seconds (currently: ${checkInterval}).`);
+    }
+
+    async function serverRequest(req="getMessages", payload={}) {
+        var lastHash = '';
+        if(req == "getMessages") {
+          const serverData = JSON.parse(localStorage.getItem(publickey + ":serverData"))  || {'lastHash': '', 'public': publickey};
+          lastHash = serverData['lastHash'];
+          payload = serverData;
+        }
+        if(req == "sendMessage") {
+        }
+        var timestamp = Math.floor(Date.now() / 1000)
+        var themessage = JSON.stringify(payload) + "#!#!#!#" + timestamp + "#!#!#!#" + rand + Crypto.SHA256(rand);//Add some junk data to avoid cryptoanalysis
+        var encrypted = cryptico.encrypt(themessage, serverAPI, RSAKeys).cipher;
+        const requestData = {
+            action: req,
+            item: "",
+            value: encrypted,
+            key: "",
+            public: publickey,
+            lastHash: lastHash
+        };
+        
+        try {
+            const response = await axios.post(serverURL, requestData, {
+                headers: { 'ngrok-skip-browser-warning':true, 'Content-Type': 'application/json'}
+            });
+            if (response.data.result) {
+                if(req=="getMessages") {
+                  const resp = JSON.parse(DOMPurify.sanitize(JSON.stringify(response.data.result)));
+                  if('lastHash' in resp) {
+                    localStorage.setItem(publickey + ":serverData",JSON.stringify({'lastHash':resp['lastHash'],'public':publickey}))
+                  }
+                  return resp;
+                } else {
+                  const resp = JSON.parse(DOMPurify.sanitize(JSON.stringify(response.data.result)));
+                  if("error" in resp) {
+                    console.log(resp.error);
+                    return "error";
+                  }
+                  return "success";
+                }
+            } else if (response.data.error) {
+                console.log('Error:' + response.data.error);
+                return "error";
+            }
+        } catch (error) {
+            console.log(error.message);
+            return "error";
+        }
+    }
+
+    async function sendUnreadMessages() {
+      intervalID = setInterval(async () => {
+        // Assume peerInfo is defined and we are checking its value
+        for (let roomZ in mymessages) {
+          if(server) {
+            break;
+          }
+          if (roomZ.endsWith("unread")) {
+            let actualRoom = roomZ.replace("unread", "");
+            updatePeerInfo(actualRoom);
+            if (parseInt(peerInfo) > 0) {
+              // Send and delete messages
+              var changed = 0;
+              for (let i = 0; i < mymessages[roomZ].length; i++) {
+                let messageData = mymessages[roomZ][i];
+                try {
+                  await sleep(100);
+                  sendMessage[actualRoom](messageData.message);
+                  if(messageData.msgID == mymessages[actualRoom][mymessages[actualRoom].length-parseInt(messageData.index)].msgID) {
+                    mymessages[actualRoom][mymessages[actualRoom].length-parseInt(messageData.index)].peerInfo = peerInfo;
+                  }
+                } catch (e) {
+                  console.log(e);
+                }
+                mymessages[roomZ].splice(i, 1);
+                addMessageToIndexedDB(publickey, mymessages);
+                changed = 1;
+                i--;
+              }
+              if(changed == 1) {
+                document.getElementById("messages").innerHTML = "";
+                await populateMessages();
+              }
+            }
+          }
+        }
+      }, 10000); // 10 seconds
+    }
+
+    async function makeMessage(msg = "", thisroom = "") {
+      if(thisroom == "") {
+        thisroom = currentroom;
+      }
+      if (room[thisroom]) {
+        if(!server) {
+          updatePeerInfo(thisroom);
+        }
+        if(msg == "") {
+            msg = DOMPurify.sanitize(document.getElementById("mymessage").value);
+        }
+        if(msg == "[image attached]" && myimage) {
+            msg = myimage;
+        } else {
+            msg = encodeURIComponent(msg);
+        }
+        var timestamp = Math.floor(Date.now() / 1000)
+        var themessage = msg + "#!#!#!#" + timestamp + "#!#!#!#" + rand + Crypto.SHA256(rand);//Add some junk data to avoid cryptoanalysis
+        var encrypted = cryptico.encrypt(themessage, theirpublickey[thisroom], RSAKeys);
+        var msgID = Crypto.SHA256(rand);
+        if(server || parseInt(peerInfo) > 0) {
+          if(AESkey[thisroom] == 'optional') {
+              if(server) {
+                const resp = await serverRequest("sendMessage", {"room":thisroom,"message":[encrypted.cipher],"public":publickey,"theirpublic":theirpublickey[thisroom],"msgID":msgID});
+                if(resp == "error") {
+                  return;
+                }
+                intervalPos = 0;
+              } else {
+                sendMessage[thisroom]([encrypted.cipher]);
+              }
+          } else {
+              if(server) {
+                const resp = await serverRequest("sendMessage", {"room":thisroom,"message":[CryptoJS.AES.encrypt(encrypted.cipher, AESkey[thisroom]).toString()],"public":publickey,"theirpublic":theirpublickey[thisroom],"msgID":msgID});
+                if(resp == "error") {
+                  return;
+                }
+                intervalPos = 0;
+              } else {
+                sendMessage[thisroom]([CryptoJS.AES.encrypt(encrypted.cipher, AESkey[thisroom]).toString()]);
+              }
+          }
+        } else {
+          if(!((thisroom+"unread") in mymessages)) {
+            mymessages[thisroom+"unread"] = [];
+          }
+          if(AESkey[thisroom] == 'optional') {
+            mymessages[thisroom+"unread"].push({'message':[encrypted.cipher], 'index': mymessages[thisroom].length+1,'msgID': msgID});
+          } else {
+            mymessages[thisroom+"unread"].push({'message':[CryptoJS.AES.encrypt(encrypted.cipher, AESkey[thisroom]).toString()], 'index': mymessages[thisroom].length+1,'msgID': msgID});
+          }
+        }
+        if (msg.substring(0, 23) === "data:image/jpeg;base64," || msg.substring(0, 22) === "data:image/png;base64,") {
+          addMessageToIndexedDB(publickey+Crypto.SHA256(msg),CryptoJS.AES.encrypt(msg, otherkey).toString());
+          msg = "trusteroImage:" + publickey+Crypto.SHA256(msg);
+        }
+        //NOTE: This method doesn't guarantee they decrypted the message. The best method is to let them send you signed confirmation
+        mymessages[thisroom].unshift({'message':CryptoJS.AES.encrypt(msg, otherkey).toString(),'peerInfo':peerInfo,'timestamp':parseInt(timestamp), 'sent': 1,'msgID': msgID});
+        addMessageToIndexedDB(publickey, mymessages);
+        if(thisroom == currentroom) {
+            await prependMessageToDiv(mymessages[thisroom][0]);
+            document.getElementById("mymessage").value = "";
+        }
+        roomselect(1);
+      }
+    }
+
+    letschat.addEventListener('click', function() {
+      show("select-screen", "none");
+      show("create-screen");
+    });
+    letscreate.addEventListener('click', function() {
+      show("create-screen", "none");
+      show("chat-screen");
+      chatmain();
+    });
+    closecreate.addEventListener('click', function() {
+      show("create-screen", "none");
+      show("select-screen");
+    });
+    document.getElementById("copyPubkey").addEventListener('click', function() {
+      const pubInfoElement = document.getElementById("pubInfo").value;
+      navigator.clipboard.writeText(pubInfoElement).then(() => {
+      }).catch(err => {
+        try {
+          copyToClipboard(pubInfoElement);
+        } catch(err) {
+          console.error("Error copying to clipboard:", err);
+        }
+      });
+    });
+    document.getElementById("copyPubkey2").addEventListener('click', function() {
+      const pubInfoElement = document.getElementById("pubInfo").value;
+      navigator.clipboard.writeText(pubInfoElement).then(() => {
+      }).catch(err => {
+        try {
+          copyToClipboard(pubInfoElement);
+        } catch(err) {
+          console.error("Error copying to clipboard:", err);
+        }
+      });
+    });
+    document.getElementById("copyPubkey3").addEventListener('click', function() {
+      const pubInfoElement = document.getElementById("pubInfo").value;
+      navigator.clipboard.writeText(pubInfoElement).then(() => {
+      }).catch(err => {
+        try {
+          copyToClipboard(pubInfoElement);
+        } catch(err) {
+          console.error("Error copying to clipboard:", err);
+        }
+      });
+    });
+    document.getElementById("copyPubkey4").addEventListener('click', function() {
+      const pubInfoElement = document.getElementById("pubInfo4").value;
+      navigator.clipboard.writeText(pubInfoElement).then(() => {
+      }).catch(err => {
+        try {
+          copyToClipboard(pubInfoElement);
+        } catch(err) {
+          console.error("Error copying to clipboard:", err);
+        }
+      });
+    });
+    document.getElementById("copyHash").addEventListener('click', function() {
+      const InfoElement = document.getElementById("hashInfo").value;
+      navigator.clipboard.writeText(InfoElement).then(() => {
+      }).catch(err => {
+        try {
+          copyToClipboard(InfoElement);
+        } catch(err) {
+          console.error("Error copying to clipboard:", err);
+        }
+      });
+    });
+    function copyToClipboard(text) {
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.display = 'none';
+      tempDiv.textContent = text;
+      document.body.appendChild(tempDiv);
+      tempDiv.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempDiv);
+    }
+
+    document.getElementById('removeChat').addEventListener('click', async function()  {
+      await removechat();
+      roomselect(1);
+      show("info-screen", "none");
+      show("select-screen");
+    });
+    async function removechat() {
+      document.getElementById("messages").innerHTML = "";        
+      for (let i = 0; i < rooms.length; i++) {
+          if (rooms[i][currentroom]) {
+              rooms.splice(i, 1);
+              break;
+          }
+      }
+      localStorage.setItem(publickey + ":rooms", JSON.stringify(rooms));        
+      await removeThis(currentroom);
+      currentroom = '';
+      roomselect();
+    };
+
+    addImage.addEventListener('click', async function()  {
+        myimage = false;
+        myimage = await getB64Image();
+        if(myimage) {            
+            myimage = "data:image/png;base64," + myimage;
+            if(compressthis.checked) {
+                myimage = await resizeImage(myimage);
+            }
+            document.getElementById("mymessage").value = '[image attached]';
+        }
+    });
+
+    async function getB64Image() {
+        var input = document.createElement('input');
+        input.type = 'file';
+
+        return new Promise((resolve, reject) => {
+            input.onchange = (e) => {
+                var file = e.target.files[0];
+                if (!file.type.match(/^image\//)) {
+                    reject(new Error('Selected file is not an image'));
+                    return;
+                }
+                var reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => {
+                    var b64String = reader.result.replace(/^data:(.*;base64,)?/, '');
+                    if (b64String.length % 4 > 0) {
+                        b64String += '='.repeat(4 - b64String.length % 4);
+                    }
+                    resolve(b64String);
+                };
+                reader.onerror = (error) => reject(error);
+            };
+            input.click();
+        });
+    }
+
+    async function resizeImage(base64Image) {
+        // Create a blob from the base64 data
+        const blob = await (await fetch(base64Image)).blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        // Create an image object and set its source to the blob URL
+        const img = new Image();
+        img.src = blobUrl;
+
+        // Wait for the image to load
+        await new Promise((resolve) => {
+            img.onload = resolve;
+        });
+
+        // Check if the image is too large
+        const maxSize = 150 * 1024; // 150 KB
+        const size = img.width * img.height * 4; // 4 bytes per pixel
+        if (size <= maxSize) {
+            return img.src;
+        }
+
+        // Resize the image using the Canvas API
+        const canvas = document.createElement('canvas');
+        const scale = Math.sqrt(maxSize / size);
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL('image/jpeg', 0.9); // Reduce quality to reduce size and convert to jpeg format
+    }
+
+    function getLastMessage(theroom2) {
+      try {
+        var msg = DOMPurify.sanitize(decodeURIComponent(CryptoJS.AES.decrypt(mymessages[theroom2][0].message, otherkey).toString(CryptoJS.enc.Utf8)));
+        if(msg.substr(-4).toLowerCase() == ".jpg" || msg.substr(-4).toLowerCase() == ".png" || msg.substr(-4).toLowerCase() == ".bmp" || msg.substring(0, 14) === "trusteroImage:" || msg.substring(0, 23) === "data:image/jpeg;base64," || msg.substring(0, 22) === "data:image/png;base64,") {
+          return "[image attached]";
+        } else {
+          return msg.length > 20 ? msg.slice(0, 20) + '...' : msg;
+        }
+      } catch {
+        return '';
+      }
+    }
+
+    async function populateMessages(startingIndex = 0) {
+        var mytext = document.createElement('div');
+        var i = 0;
+        var x = 0;
+        var msg = '';
+        if(startingIndex != 0) {
+            i = startingIndex;
+        }
+        for(i; i < mymessages[currentroom].length; i++) {
+            if(x == 10) {
+                break;
+            }
+            mytext = document.createElement('div');
+            msg = CryptoJS.AES.decrypt(mymessages[currentroom][i].message, otherkey).toString(CryptoJS.enc.Utf8);
+            if(msg.substr(-4).toLowerCase() == ".jpg" || msg.substr(-4).toLowerCase() == ".png" || msg.substr(-4).toLowerCase() == ".bmp") {
+                if(loadimages == true) {
+                    try {
+                        var res = await checkImage(msg.replace(/[^A-Za-z0-9./:]/gi,''))
+                        if(res.result == true) {
+                            msg = '<img src="' + msg.replace(/[^A-Za-z0-9./:]/gi,'') + '">'
+                        }
+                    } catch(e) {
+                        console.log(e);
+                        msg = '[image not loaded]';
+                    }
+                }
+            }
+            if(msg.substring(0, 14) === "trusteroImage:") {
+              msg = msg.startsWith("trusteroImage:") ? msg.slice("trusteroImage:".length) : msg;
+              try {
+                var messages = await getMessagesFromIndexedDB(msg);
+                msg = CryptoJS.AES.decrypt(messages['message'], otherkey).toString(CryptoJS.enc.Utf8);
+              } catch(error) {
+                console.log(error);
+                msg = '[image not loaded]';
+              };
+            }
+            if (msg.substring(0, 23) === "data:image/jpeg;base64," || msg.substring(0, 22) === "data:image/png;base64,") {
+                msg = msg.replace(/^data:(.*;base64,)?/, '');
+                msg = '<img src="' + "data:image/jpeg;base64," + msg.replace(/[^A-Za-z0-9+/=]/gi,'') + '">';
+                if(loadimages == false) {
+                    msg = '[image not loaded]';
+                }
+            }
+            if (mymessages[currentroom][i].sent == 1) { // Message from "You"
+              msg=decodeURIComponent(DOMPurify.sanitize(msg));
+              let seenIndicator = mymessages[currentroom][i].peerInfo > 0 ? '&#10004;&#10004;' : '&#10004;'; 
+              let timeFormatted = new Date(parseInt(mymessages[currentroom][i].timestamp) * 1000).toLocaleString();
+              mytext.innerHTML = ` <div style='display: flex; justify-content: flex-start; margin-bottom: 10px; margin-left: 10px;'> <div style="background-color: #3e65f5; color: white; border-radius: 10px; padding: 10px; max-width: 70%; word-wrap: break-word; position: relative;"> <span style="position: absolute; top: 10px; left: -10px; width: 0; height: 0; border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-right: 10px solid #3e65f5;"></span>${msg}<br> <small style="font-size: 10px; color: #ccc;">${timeFormatted} ${seenIndicator}</small> </div> </div> `;
+            } else { // Message from "Them"
+              msg=decodeURIComponent(DOMPurify.sanitize(msg));
+              let seenIndicator = mymessages[currentroom][i].peerInfo > 0 ? '&#10004;&#10004;' : '&#10004;';
+              let timeFormatted = new Date(parseInt(mymessages[currentroom][i].timestamp) * 1000).toLocaleString();
+              mytext.innerHTML = ` <div style='display: flex; justify-content: flex-end; margin-bottom: 10px; margin-right: 10px;'> <div style="background-color: #2db22d; color: white; border-radius: 10px; padding: 10px; max-width: 70%; word-wrap: break-word; position: relative;"> <span style="position: absolute; top: 10px; right: -10px; width: 0; height: 0; border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-left: 10px solid #2db22d;"></span>${msg}<br> <small style="font-size: 10px; color: #ccc;">${timeFormatted} ${seenIndicator}</small> </div> </div> `;
+            }
+            messagesDiv.insertBefore(mytext, messagesDiv.firstChild);
+            x += 1;
+            visiblemessages += 1;
+        }
+        if(startingIndex == 0) {
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    }
+
+    // Function to check if the user has scrolled to the top of the messages div
+    function isAtTopOfMessages() {
+      return messagesDiv.scrollTop <= 25;
+    }
+
+    // Function to prepend a message to the messages div
+    async function prependMessageToDiv(message) {
+        //localStorage.setItem(publickey + ":messages", JSON.stringify(mymessages));        
+        const newDiv = document.createElement('div');
+        var msg = CryptoJS.AES.decrypt(message.message, otherkey).toString(CryptoJS.enc.Utf8);
+        if(msg.substr(-4).toLowerCase() == ".jpg" || msg.substr(-4).toLowerCase() == ".png" || msg.substr(-4).toLowerCase() == ".bmp") {
+            if(loadimages == true) {
+                try {
+                    var res = await checkImage(msg.replace(/[^A-Za-z0-9./:]/gi,''))
+                    if(res.result == true) {                
+                        msg = '<img src="' + msg.replace(/[^A-Za-z0-9./:]/gi,'') + '">'
+                    }
+                } catch(e) {
+                    console.log(e);
+                    msg = '[image not loaded]';
+                }
+            }
+        }
+        if(msg.substring(0, 14) === "trusteroImage:") {
+          msg = msg.startsWith("trusteroImage:") ? msg.slice("trusteroImage:".length) : msg;
+          try {
+            var messages = await getMessagesFromIndexedDB(msg);
+            msg = CryptoJS.AES.decrypt(messages['message'], otherkey).toString(CryptoJS.enc.Utf8);
+          } catch(error) {
+            console.log(error);
+            msg = '[image not loaded]';
+          };
+        }
+        if (msg.substring(0, 23) === "data:image/jpeg;base64," || msg.substring(0, 22) === "data:image/png;base64,") {
+            msg = msg.replace(/^data:(.*;base64,)?/, '');
+            msg = '<img src="' + "data:image/jpeg;base64," + msg.replace(/[^A-Za-z0-9+/=]/gi,'') + '">';
+            if(loadimages == false) {
+                msg = '[image not loaded]';
+            }
+        }
+        if (message.sent == 1) { // Message from "You"
+          msg=decodeURIComponent(DOMPurify.sanitize(msg));
+          let seenIndicator = message.peerInfo > 0 ? '&#10004;&#10004;' : '&#10004;'; 
+          let timeFormatted = new Date(parseInt(message.timestamp) * 1000).toLocaleString();
+          newDiv.innerHTML = ` <div style='display: flex; justify-content: flex-start; margin-bottom: 10px; margin-left: 10px;'> <div style="background-color: #3e65f5; color: white; border-radius: 10px; padding: 10px; max-width: 70%; word-wrap: break-word; position: relative;"> <span style="position: absolute; top: 10px; left: -10px; width: 0; height: 0; border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-right: 10px solid #3e65f5;"></span>${msg}<br> <small style="font-size: 10px; color: #ccc;">${timeFormatted} ${seenIndicator}</small> </div> </div> `;
+        } else { // Message from "Them"
+          msg=decodeURIComponent(DOMPurify.sanitize(msg));
+          let seenIndicator = message.peerInfo > 0 ? '&#10004;&#10004;' : '&#10004;';
+          let timeFormatted = new Date(parseInt(message.timestamp) * 1000).toLocaleString();
+          newDiv.innerHTML = ` <div style='display: flex; justify-content: flex-end; margin-bottom: 10px; margin-right: 10px;'> <div style="background-color: #2db22d; color: white; border-radius: 10px; padding: 10px; max-width: 70%; word-wrap: break-word; position: relative;"> <span style="position: absolute; top: 10px; right: -10px; width: 0; height: 0; border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-left: 10px solid #2db22d;"></span>${msg}<br> <small style="font-size: 10px; color: #ccc;">${timeFormatted} ${seenIndicator}</small> </div> </div> `;
+        }
+        messagesDiv.appendChild(newDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    messagesDiv.addEventListener('scroll', async function () {
+      if (isAtTopOfMessages()) {
+        await populateMessages(visiblemessages);
+      }
+    });
+
+    async function joinThis(config, myroom2) {
+      if(room[myroom2]) {
+        console.log("Entering chat: ", myroom2);
+        return;
+      }
+      room[myroom2] = joinRoom(config, myroom2);
+      room[myroom2].myroom = myroom2;
+      room[myroom2].onPeerJoin(peerId => notify(`${peerId} joined`,myroom2));
+      room[myroom2].onPeerLeave(peerId => notify(`${peerId} left`,myroom2));
+      ;[sendMessage[myroom2], getMessage] = room[myroom2].makeAction('message');
+      getMessage(createMessageHandler(myroom2));
+    }
+
+    function createMessageHandler(room7) {
+      return function(message) {
+        //console.log('Message received in room:', room7);
+        showMessage(message, room7);
+      };
+    }
+
+    async function removeThis(theroom) {
+      if(!server) {
+        room[theroom].leave(theroom);
+      }
+      delete room[theroom];
+    }    
+    var muted = false;
+    var speakers = false;
+
+    document.getElementById("mute-call").addEventListener('click', async function () {
+      muted = !muted;
+      if (muted) {
+        document.getElementById("mute-text").innerHTML = "Muted";
+        // Mute the microphone
+        const track = selfStream.getAudioTracks()[0];
+        track.enabled = false;
+      } else {
+        document.getElementById("mute-text").innerHTML = "Mute";
+        // Unmute the microphone
+        const track = selfStream.getAudioTracks()[0];
+        track.enabled = true;
+      }
+    });
+    document.getElementById("audio-call").addEventListener('click', async function () {
+      const mediaDevices = navigator.mediaDevices;
+      const outputDevices = await mediaDevices.enumerateDevices();
+      if (outputDevices.length < 2) {
+        console.log("Only one output device available. Switching audio might not be possible.");        
+      } else {
+        //Here could attempt to support android speaker
+        if(speakers) {
+          document.getElementById("audio-text").innerHTML = "Speakers";
+        } else {
+          document.getElementById("audio-text").innerHTML = "Audio";
+        }
+      }
+    });
+
+    async function detectSpeakerUsage() {
+      try {
+        const mediaDevices = navigator.mediaDevices;
+        const outputDevices = await mediaDevices.enumerateDevices();
+
+        let isSpeakerActive = false;
+        if (outputDevices.length < 2) {
+          return;
+        }
+      } catch (e) {        
+      }
+      //Here could attempt to support android speaker
+    }
+
+    async function voicecall(voiceroom = "", incoming = 0) {
+        let roomIndex = 0;
+        let askedStream = false;
+        for (roomIndex = 0; roomIndex < rooms.length; i++) {
+          if (rooms[roomIndex][voiceroom]) {
+            break;
+          }
+        }
+        var audio = new Audio();
+        if(incoming == 0) {
+            if(oncall != '') {
+                console.log("You are already on a call.");
+                return;
+            }
+            await makeMessage("Outgoing phone call...");
+        } else {
+            if(oncall != '') {
+                console.log("Incoming call from another user..."); //Call is busy
+                return;
+            }
+            const confirmation = await Swal.fire({
+              title: 'Call from: ' + rooms[roomIndex][voiceroom].name,
+              text: "Incoming voice call. Do you want to answer?",
+              showCancelButton: true,
+              confirmButtonText: 'Yes',
+              cancelButtonText: 'No',
+            });
+            if (confirmation.isConfirmed) {
+              selfStream = await navigator.mediaDevices.getUserMedia({
+                  audio: true,
+                  video: false
+              });
+              audio.srcObject = selfStream;
+              audio.autoplay = true;
+              speakers = false;
+              muted = false;
+              if(document.getElementById("chat-screen").style.display != "none") {
+                if(currentroom == voiceroom) {
+                  show("chat-screen", "none");
+                  show("call-screen", "flex");
+                }
+              }
+              startCallTimer();
+              callAudio = audio;
+              await detectSpeakerUsage();
+              askedStream = true;
+            } else {
+              return;
+            }
+        }
+        if(selfStream != '' && !askedStream) {
+            return;
+        }
+        document.getElementById("returnToCallButton").style.display = "flex";
+        // get a local audio stream from the microphone
+        if(!askedStream) {
+          selfStream = await navigator.mediaDevices.getUserMedia({
+              audio: true,
+              video: false
+          });
+        }
+        // send stream to peers currently in the room
+        room[voiceroom].addStream(selfStream);
+        oncall = voiceroom;
+        document.getElementById("callName").innerHTML = rooms[roomIndex][voiceroom].name;
+        // send stream to peers who join later
+        room[voiceroom].onPeerJoin(peerId => {
+          room[voiceroom].addStream(selfStream, peerId);          
+        });
+        // handle streams from other peers
+        room[voiceroom].onPeerStream(async (stream, peerId) => {
+            audio.srcObject = stream;
+            audio.autoplay = true;
+            speakers = false;
+            muted = false;
+            startCallTimer();
+            callAudio = audio;
+            await detectSpeakerUsage();
+        });
+    }
+    let myCallTime = 0;
+    let callTimerInterval;
+
+    function startCallTimer() {
+      callTimerInterval = setInterval(() => {
+        myCallTime++;
+        const minutes = Math.floor(myCallTime / 60);
+        const seconds = myCallTime % 60;
+        const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        document.getElementById("callTime").innerHTML = formattedTime;
+      }, 1000); // Update every second
+    }
+
+    function stopCallTimer() {
+      clearInterval(callTimerInterval);
+      document.getElementById("callTime").innerHTML = "00:00";
+      myCallTime = 0;
+    }
+
+    async function endcall(myroom3 = '', checkscreen=1) {
+      document.getElementById("returnToCallButton").style.display = "none";
+      if(selfStream != "") {
+          if(checkscreen==1) {
+            if(document.getElementById("call-screen").style.display != "none") {
+              show("call-screen", "none");
+              show("chat-screen", "flex");
+            }
+          }
+          try {
+            room[oncall].removeStream(selfStream);
+          } catch (e) {            
+          }
+          selfStream = '';
+          const minutes = Math.floor(myCallTime / 60);
+          const seconds = myCallTime % 60;
+          const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+          notify("Call time: " + formattedTime,oncall);
+          stopCallTimer();
+          if(checkscreen == 0) {
+            await makeMessage("Phone call ended.", oncall);
+          }
+      }
+      oncall = '';
+      try {
+        const stream = callAudio.srcObject;
+        const tracks = stream.getTracks();
+        tracks.forEach((track) => {          
+          track.stop();
+        });
+        callAudio.srcObject = null;
+      } catch (e) {
+        console.log(e);
+      }    
+      callAudio = '';
+    }
+
+    function notify(mystring, myroom4='') {
+        if(myroom4 != '') {
+            if(myroom4 != currentroom) {
+                console.log(mystring);
+                return;
+            }
+        }
+        document.getElementById("messages").innerHTML += `<br><br><div class="notify-container"><div class="notify-content">${DOMPurify.sanitize(mystring)}</div></div>`;
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    async function showMessage(message, myroom5) {
+        if(Crypto.SHA256(message[0]) in hashes) {
+            return
+        }
+        hashes[Crypto.SHA256(message[0])] = 1;
+        if(AESkey[myroom5] != "optional") {
+            var decrypted = CryptoJS.AES.decrypt(message[0], AESkey[myroom5]).toString(CryptoJS.enc.Utf8);
+            var newmessage = cryptico.decrypt(decrypted, RSAKeys)
+        }
+        else {
+            var newmessage = cryptico.decrypt(message[0], RSAKeys)
+        }
+        if(newmessage.plaintext.length < 85) {
+            return //Message seems a bit small lets just not let counter-party know if we can decrypt it avoid any cryptoanalysis
+        }
+        //This both decrypts and verifies they signed the message
+        if(newmessage.signature == "verified" && newmessage.publicKeyString == theirpublickey[myroom5]) {
+            var msg = newmessage.plaintext.split("#!#!#!#")[0]
+            msg = DOMPurify.sanitize(msg);
+            if(DOMPurify.sanitize(decodeURIComponent(msg)) == "Outgoing phone call...") {
+                msg = "Incoming phone call...";
+                const selectedRoom = rooms.find(myroom6 => Object.keys(myroom6)[0] === myroom5);
+                await showroom(selectedRoom);
+                await voicecall(myroom5, 1);
+            }
+            if(DOMPurify.sanitize(decodeURIComponent(msg)) == "Phone call ended.") {
+                await endcall(myroom5);
+            }
+            var timestamp = DOMPurify.sanitize(newmessage.plaintext.split("#!#!#!#")[1])
+            if (msg.substring(0, 23) === "data:image/jpeg;base64," || msg.substring(0, 22) === "data:image/png;base64,") {
+              addMessageToIndexedDB(publickey+Crypto.SHA256(msg),CryptoJS.AES.encrypt(msg, otherkey).toString());
+              msg = "trusteroImage:" + publickey+Crypto.SHA256(msg);
+            }
+            mymessages[myroom5].unshift({'message':CryptoJS.AES.encrypt(msg, otherkey).toString(),'peerInfo':1,'timestamp':parseInt(timestamp), 'sent': 0});
+            addMessageToIndexedDB(publickey, mymessages);
+            if(document.getElementById("showNotifications").checked) {
+              showNotification("New message", (DOMPurify.sanitize(decodeURIComponent(msg)).length > 10 ? DOMPurify.sanitize(decodeURIComponent(msg)).slice(0, 10) + '...' : DOMPurify.sanitize(decodeURIComponent(msg))));
+            }            
+            if(myroom5 == currentroom && document.getElementById("chat-screen").style.display == "flex") {
+                await prependMessageToDiv(mymessages[myroom5][0]);
+                roomselect(1);
+            } else {
+                await newMessageNotify(myroom5);
+            }
+        }
+    }
+
+    async function newMessageNotify(roomnotify) {
+        mynotifications[roomnotify] = 1;
+        localStorage.setItem(publickey + ":mynotifications", JSON.stringify(mynotifications));
+        roomselect();
+    }
+
+    function updatePeerInfo(anotherroom = '') {
+        if(anotherroom == '') {
+            anotherroom = currentroom;
+            if(currentroom == '') {
+              return 0;
+            }
+        }
+        const count = Object.keys(room[anotherroom].getPeers() || {}).length;
+        peerInfo = count;
+    }
+
+    async function chatmain() {
+        var chatRoomName = document.getElementById("roomNicknameInput").value;
+        var theirpublickey2 = document.getElementById("publicKeyInput").value;
+        var AESkey2 = document.getElementById("aesPasswordInput").value;
+        document.getElementById("roomNicknameInput").value = '';
+        document.getElementById("publicKeyInput").value = '';
+        document.getElementById("aesPasswordInput").value = '';
+        if(publickey == '' || theirpublickey2 == '') {          
+            await Swal.fire("Please log in before entering a chat.");
+            show("select-screen", "none");
+            show("login-screen");
+            return;
+        }
+        if(AESkey2 != '') {
+            AESkey2 = Crypto.SHA256(AESkey2);
+        } else {
+            AESkey2 = 'optional';
+        }
+        var mykeys = [];
+        mykeys.push(publickey);
+        mykeys.push(theirpublickey2);
+        mykeys.sort();
+        var sharedKeys = Crypto.SHA256(mykeys[0]+mykeys[1]+AESkey2);
+        currentroom = sharedKeys;
+        rooms.push({[sharedKeys]:{'name':chatRoomName, 'theirpublickey':theirpublickey2, 'AES':AESkey2}});
+        localStorage.setItem(publickey + ":rooms", JSON.stringify(rooms));
+        window.globalConfigFile = RTCConfiguration;
+        try {
+          if(server) {
+            room[sharedKeys] = {'myroom':sharedKeys};
+          } else {
+            if(supaBase) {
+              joinThis({rtcConfig: RTCConfiguration, appId: supaBaseURL, supabaseKey: supaBaseAPI, password: AESkey2}, sharedKeys);
+            } else if(fireBase) {
+              joinThis({rtcConfig: RTCConfiguration, appId: fireBaseURL, password: AESkey2}, sharedKeys);
+            } else {
+              joinThis({rtcConfig: RTCConfiguration, appId: 'Trustero', password: AESkey2}, sharedKeys);
+            }
+          }
+        } catch (e) {
+          console.log(e);
+          await Swal.fire({
+              title: 'Connection failed',
+              text: 'Joining room failed. Please check your connection strategy and refresh the page',
+              showCancelButton: false,
+              confirmButtonText: 'OK'
+          });
+        }
+        notify("Joined Room - " + sharedKeys);
+        roomselect();
+        const selectedRoom = rooms.find(myroom7 => Object.keys(myroom7)[0] === currentroom);
+        show("select-screen", "none");
+        showroom(selectedRoom);
+    }
+    //WebRTC and P2P in general is somewhat subverted by ISPs and lack of hole punching methods
+    //Therefore, it may be needed to subscribe to some TURN servers to relay WebRTC data
+    //Currently there are not many robust free ones as they would get quickly hit with traffic
+    //So therefore users are able to supply their own TURN servers if a connection isn't found
+    //Tested and working: Firefox with TURN, Kiwi/chromium browser android, Chromium older version does work in some cases
+    //There are some errors in different browsers that make connection difficult:
+    //Chromium older version to phone(WebRTC): Uncaught DOMException: Failed to execute 'setRemoteDescription' on 'RTCPeerConnection': Failed to set remote answer sdp: Called in wrong state: stable
+    //Firefox: Uncaught DOMException: Failed to execute 'setRemoteDescription' on 'RTCPeerConnection': Failed to set remote answer sdp: Called in wrong state: stable
+    //Firefox: WebRTC: Using five or more STUN/TURN servers causes problems (But it does connect)
+    //Firefox behind OpenVPN/router: Needed TURN server
+    //Experimenting with launchTrustero.bat which runs Chromium locally as web app and bypasses Firewall to possibly enhance WebRTC without TURN
+    //For user to test this type of local sandboxed Chromium setup they should install Chromium to the directory in Trustero
+    //Most browsers: Uncaught Error: Connection failed.at Ki._onConnectionStateChange (trystero-supabase.min.js:1) at RTCPeerConnection._pc.onconnectionstatechange
+
+</script>
+</div>
+<script>
+  if (typeof navigator.serviceWorker !== 'undefined') {
+    navigator.serviceWorker.register('sw.js')
+  }
+</script>
+</body>
+</html>

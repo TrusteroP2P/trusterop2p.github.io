@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Trustero Message Server</title>
+</head>
+<body>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'">
+  <div id="serverData"></div>
+  <script type="text/javascript" src="./static/cryptico.min.js"></script>
+  <script type="text/javascript" src="./static/purify.js"></script>
+  <script type="text/javascript" src="./static/crypto-sha256.js"></script>
+  <script type="text/javascript" src="./static/axios.min.js"></script>
+  <script type="text/javascript" src="./static/sweetalert211.min.js"></script>
+  <script>
+    var serverPrivateKey;
+    var serverEncryptionKey;
+    var serverPublicKey = "";
+    var initiated = true;
+    var reqdb={};
+    var serverPublicKey = ""; //set this to your displayed public key so users know how to connect
+    var apiUrl = "https://my-custom-url.ngrok-free.app/api"; //set to the URL of your ngrok to test remote requests
+    var lockThis = false;
+    document.getElementById("serverData").innerHTML = "API URL: " + apiUrl + "<br><br>API KEY: " + serverPublicKey;
+    async function triggerEvent() {
+      if(window.serverPassword == '') {
+        document.getElementById("serverData").innerHTML = 'Configuration (static/config.js) file data not complete. Please review credentials.';
+        initiated = false;
+      }
+      if(initiated) {
+        var hashedPassword = Crypto.SHA256(window.serverPassword);
+        for (var i = 1; i < 50000; i++) {
+            hashedPassword = Crypto.SHA256(hashedPassword);
+        }    
+        serverPrivateKey = '0x' + hashedPassword;
+        serverEncryptionKey = cryptico.generateRSAKey(Crypto.SHA256(hashedPassword), 1024);
+        serverPublicKey = cryptico.publicKeyString(serverEncryptionKey);
+        document.getElementById("serverData").innerHTML = 'Your public key: ' + serverPublicKey;
+      }
+      await getReqDB();
+    }
+
+    async function getReqDB() {
+      reqdb = await getItem('reqdb');
+      if(reqdb == undefined || reqdb == null) {
+        reqdb={};
+      } else {
+        reqdb = JSON.parse(DOMPurify.sanitize(reqdb));
+      }
+    }
+
+    // Poll every 1000ms to check when things finish loading
+    const intervalId = setInterval(() => {
+        if (typeof window.globalSessionKey !== 'undefined' && window.globalSessionKey !== null) {
+            // Once the variable is set, trigger the event and clear the interval
+            triggerEvent();
+            clearInterval(intervalId);
+        }
+    }, 1000);
+
+    function dehexlify(hexStr) {
+        let str = '';
+        for (let i = 0; i < hexStr.length; i += 2) {
+            str += String.fromCharCode(parseInt(hexStr.substr(i, 2), 16));
+        }
+        return str;
+    }
+
+    function getItem(item, value = "") {
+        return fetch('/api', {  // Ensure to return the fetch promise
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ action: 'get', item, value, key: window.globalSessionKey }),
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok'); // Handle HTTP errors
+            }
+            return response.json(); // Parse the JSON data
+        })
+        .then(data => {
+            return data.value; // Return the value from the parsed JSON
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            return undefined; // Return undefined in case of error
+        });
+    }
+
+    // Function to set an item on the server
+    function setItem(item, value) {
+        fetch('/api', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ action: 'set', item, value, key:window.globalSessionKey }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Item set:', data);
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    }
+
+    async function sendMessage(request = '') {
+      try {
+        if(lockThis) {
+          return {'error':'Server is busy'};
+        }
+        lockThis = true;
+        if (typeof window.globalSessionKey == 'undefined' || window.globalSessionKey == null) {
+          lockThis = false;
+          return {'error':'Server not ready'};
+        }
+        request = DOMPurify.sanitize(dehexlify(request));
+        var newmessage = cryptico.decrypt(request, serverEncryptionKey)
+        if(newmessage.plaintext.length < 85) {
+          lockThis = false;
+          return {'error':'Incorrect padding'}; //Avoid any cryptoanalysis
+        }
+        //This both decrypts and verifies they signed the message
+        if(newmessage.signature == "verified") {
+          var msg = newmessage.plaintext.split("#!#!#!#")[0];
+          msg = JSON.parse(DOMPurify.sanitize(msg));
+          if(newmessage.publicKeyString != msg.public) {
+            lockThis = false;
+            return {'error':'Signature verification failed'};
+          }
+        } else {
+          lockThis = false;
+          return {'error':'Decryption failure'};
+        }
+        await getReqDB();
+        if(!(msg.public in reqdb)) {
+          reqdb[msg.public] = {"lastHash":"","readSent":{[msg.room]:""},"msgCount":0};
+          setItem('reqdb:'+msg.public,JSON.stringify(reqdb[msg.public]));
+        }
+        if(!(msg.theirpublic in reqdb)) {
+          reqdb[msg.theirpublic] = {"lastHash":"","readSent":{[msg.room]:""},"msgCount":0};
+        }
+        if(msg.theirpublic.includes("reqdb:")) {
+          throw new Error("failed");
+        }
+        if(msg.theirpublic.includes("hashes:")) {
+          throw new Error("failed");
+        }
+        var sentMsg = {"sender":msg.public,"room":msg.room,"msgID":msg.msgID,"message":msg.message};
+        setItem(msg.theirpublic+":"+reqdb[msg.theirpublic].msgCount,JSON.stringify(sentMsg));
+        setItem("hashes:"+Crypto.SHA256(sentMsg.sender+sentMsg.room+sentMsg.msgID+sentMsg.message),reqdb[msg.theirpublic].msgCount);
+        reqdb[msg.theirpublic].msgCount+=1;
+        setItem('reqdb:'+msg.theirpublic,JSON.stringify(reqdb[msg.theirpublic]));
+        lockThis = false;
+        return {'success':1};
+      } catch (e) {
+        console.log(e)
+        lockThis = false;
+        return {'error':e};
+      }
+    }
+
+    async function getMessages(request = '') {
+      try {
+        if(lockThis) {
+          return {'error':'Server is busy'};
+        }
+        lockThis = true;
+        if (typeof window.globalSessionKey == 'undefined' || window.globalSessionKey == null) {
+          lockThis = false;
+          return {'error':'Server not ready'};
+        }
+        request = DOMPurify.sanitize(dehexlify(request));
+        var newmessage = cryptico.decrypt(request, serverEncryptionKey)
+        if(newmessage.plaintext.length < 85) {
+          lockThis = false;
+          return {'error':'Incorrect padding'}; //Avoid any cryptoanalysis
+        }
+        //This both decrypts and verifies they signed the message
+        if(newmessage.signature == "verified") {
+          var msg = newmessage.plaintext.split("#!#!#!#")[0];
+          msg = JSON.parse(DOMPurify.sanitize(msg));
+          if(newmessage.publicKeyString != msg.public) {
+            lockThis = false;
+            return {'error':'Signature verification failed'};
+          }
+        } else {
+          lockThis = false;
+          return {'error':'Decryption failure'};
+        }
+        await getReqDB();
+        if(!(msg.public in reqdb)) {
+          reqdb[msg.public] = {"lastHash":"","readSent":{},"msgCount":0};
+          setItem('reqdb:'+msg.public,JSON.stringify(reqdb[msg.public]));
+        }
+        var startingIndex = 0;
+        if(msg.lastHash != '') {
+            var myres = await getItem('hashes', msg.lastHash);
+            if(myres != null) {
+                myres=DOMPurify.sanitize((myres).toString());
+                startingIndex = parseInt(myres) + 1;
+            }
+        }
+        if(msg.public.includes("reqdb:")) {
+          throw new Error("failed");
+        }
+        if(msg.public.includes("hashes:")) {
+          throw new Error("failed");
+        }
+        var x=0;
+        response = {'lastHash':msg.lastHash,'messages':[],'readSent':{},'success':1};
+        while(x<window.messagesPerRequest) {
+            if(x+startingIndex == reqdb[msg.public].msgCount) {
+                break;
+            }
+            var sentMsg = JSON.parse(DOMPurify.sanitize(JSON.stringify(await getItem(msg.public,(x+startingIndex).toString()))));
+            reqdb[msg.public].lastHash = Crypto.SHA256(sentMsg.sender+sentMsg.room+sentMsg.msgID+sentMsg.message);
+            setItem('reqdb:'+msg.public,JSON.stringify(reqdb[msg.public]));
+            reqdb[sentMsg.sender]['readSent'][sentMsg.room]=sentMsg.msgID;
+            setItem('reqdb:'+sentMsg.sender,JSON.stringify(reqdb[sentMsg.sender]));
+            response.messages.push([sentMsg.message,sentMsg.room]);
+            x+=1;
+        }
+        response.lastHash = reqdb[msg.public].lastHash;
+        response.readSent = reqdb[msg.public].readSent;
+        lockThis = false;
+        return response;
+      } catch (e) {
+        console.log(e)
+        lockThis = false;
+        return {'error':e};
+      }
+    }
+  </script>
+</body>
+</html>
