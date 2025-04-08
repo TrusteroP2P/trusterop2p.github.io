@@ -134,29 +134,29 @@ content="Serverless, decentralized and encrypted P2P chat based on Trystero"
       }
   }
 
-.notify-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #111017;
-    border-radius: 5px;
-    padding: 5px;
-    margin: 5px;
-    flex-wrap: wrap; /* Allows content to wrap to a new line */
-    width: 100%; /* Ensures the container takes up the full width of its parent */
-    max-width: 100%; /* Prevents the container from exceeding its parent's width */
-    box-sizing: border-box; /* Ensures padding is included in the element's width */
-}
+  .notify-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #111017;
+      border-radius: 5px;
+      padding: 5px;
+      margin: 5px;
+      flex-wrap: wrap; /* Allows content to wrap to a new line */
+      width: 100%; /* Ensures the container takes up the full width of its parent */
+      max-width: 100%; /* Prevents the container from exceeding its parent's width */
+      box-sizing: border-box; /* Ensures padding is included in the element's width */
+  }
 
-.notify-content {
-    color: ivory;
-    margin: 0 5px; /* Adjust margin as needed */
-    flex: 1 1 auto; /* Allows the content to grow and shrink */
-    word-wrap: break-word; /* Ensures long words break properly */
-    overflow-wrap: break-word; /* Provides additional word-breaking control */
-    text-align: center; /* Center-aligns the text */
-    width: 100%; /* Ensures the content spans the full width on small screens */
-}
+  .notify-content {
+      color: ivory;
+      margin: 0 5px; /* Adjust margin as needed */
+      flex: 1 1 auto; /* Allows the content to grow and shrink */
+      word-wrap: break-word; /* Ensures long words break properly */
+      overflow-wrap: break-word; /* Provides additional word-breaking control */
+      text-align: center; /* Center-aligns the text */
+      width: 100%; /* Ensures the content spans the full width on small screens */
+  }
   .fg-emoji-container {
   }
 </style>
@@ -1040,6 +1040,12 @@ var RTCConfiguration = {
         show("settings-screen");
       }
     }
+    document.getElementById("database-url").addEventListener("input", function () {
+      refreshThis = 1;
+    });
+    document.getElementById("api-key").addEventListener("input", function () {
+      refreshThis = 1;
+    });
     async function settingsBack() {
       if(refreshThis == 1) {
         var selection = document.getElementById("strategy").value;
@@ -1393,9 +1399,10 @@ var RTCConfiguration = {
     sendthis.addEventListener('click', async function() {
         await makeMessage();
     })
-    document.getElementById("mymessage").addEventListener("keypress", function(event) {
+    document.getElementById("mymessage").addEventListener("keydown", async function(event) {
       if (event.key === "Enter") {
-        makeMessage();
+        event.preventDefault();
+        await makeMessage();
       }
     });
     if(localStorage.getItem("RTCConfiguration") && localStorage.getItem("RTCConfiguration") != "") {
@@ -1691,6 +1698,41 @@ var RTCConfiguration = {
       }, 10000); // 10 seconds
     }
 
+    let sendAnimationInterval = null;
+
+    function startSendTextAnimation() {
+      const sendButton = document.getElementById("sendbutton");
+
+      // Fix button dimensions before text changes
+      const rect = sendButton.getBoundingClientRect();
+      sendButton.style.width = rect.width + "px";
+      sendButton.style.height = rect.height + "px";
+
+      // Style to prevent layout shift
+      sendButton.style.display = "inline-flex";
+      sendButton.style.alignItems = "center";
+      sendButton.style.justifyContent = "flex-start"; // keep "S" on left
+      sendButton.style.whiteSpace = "nowrap";
+      sendButton.disabled = true;
+
+      let dotCount = 0;
+      sendAnimationInterval = setInterval(() => {
+        sendButton.textContent = "Send" + ".".repeat(dotCount);
+        dotCount = (dotCount + 1) % 4;
+      }, 500);
+    }
+
+    function stopSendTextAnimation() {
+      const sendButton = document.getElementById("sendbutton");
+      clearInterval(sendAnimationInterval);
+      sendButton.textContent = "Send";
+      sendButton.disabled = false;
+
+      // Optionally remove fixed dimensions
+      sendButton.style.width = "";
+      sendButton.style.height = "";
+    }
+
     async function makeMessage(msg = "", thisroom = "") {
       if(thisroom == "") {
         thisroom = currentroom;
@@ -1701,6 +1743,9 @@ var RTCConfiguration = {
         }
         if(msg == "") {
             msg = DOMPurify.sanitize(document.getElementById("mymessage").value);
+            if(msg == "") {
+              return;
+            }
         }
         if(msg == "[image attached]" && myimage) {
             msg = myimage;
@@ -1714,7 +1759,12 @@ var RTCConfiguration = {
         if(server || parseInt(peerInfo) > 0) {
           if(AESkey[thisroom] == 'optional') {
               if(server) {
+                if(thisroom == currentroom) {
+                  document.getElementById("mymessage").value = "";
+                }
+                startSendTextAnimation();
                 const resp = await serverRequest("sendMessage", {"room":thisroom,"message":[encrypted.cipher],"public":publickey,"theirpublic":theirpublickey[thisroom],"msgID":msgID});
+                stopSendTextAnimation();
                 if(resp == "error") {
                   return;
                 }
@@ -1724,7 +1774,12 @@ var RTCConfiguration = {
               }
           } else {
               if(server) {
+                if(thisroom == currentroom) {
+                  document.getElementById("mymessage").value = "";
+                }
+                startSendTextAnimation();
                 const resp = await serverRequest("sendMessage", {"room":thisroom,"message":[CryptoJS.AES.encrypt(encrypted.cipher, AESkey[thisroom]).toString()],"public":publickey,"theirpublic":theirpublickey[thisroom],"msgID":msgID});
+                stopSendTextAnimation();
                 if(resp == "error") {
                   return;
                 }
@@ -1946,6 +2001,10 @@ var RTCConfiguration = {
         if(startingIndex != 0) {
             i = startingIndex;
         }
+        try {
+          messagesDiv.removeChild(sentinel);
+        } catch (e) {
+        } 
         for(i; i < mymessages[currentroom].length; i++) {
             if(x == 10) {
                 break;
@@ -2000,12 +2059,13 @@ var RTCConfiguration = {
         if(startingIndex == 0) {
           messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
+        messagesDiv.prepend(sentinel);
     }
 
     // Function to check if the user has scrolled to the top of the messages div
-    function isAtTopOfMessages() {
-      return messagesDiv.scrollTop <= 25;
-    }
+    //function isAtTopOfMessages() {
+    //  return messagesDiv.scrollTop <= 25;
+    //}
 
     // Function to prepend a message to the messages div
     async function prependMessageToDiv(message) {
@@ -2057,9 +2117,28 @@ var RTCConfiguration = {
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
 
-    messagesDiv.addEventListener('scroll', async function () {
-      if (isAtTopOfMessages()) {
-        await populateMessages(visiblemessages);
+    //messagesDiv.addEventListener('scroll', async function () {
+    //  if (isAtTopOfMessages()) {
+    //    await populateMessages(visiblemessages);
+    //  }
+    //});
+    const sentinel = document.createElement('div');
+    sentinel.id = 'top-sentinel';
+    sentinel.style.height = '1px';
+    sentinel.style.margin = '0';
+    sentinel.style.padding = '0';
+    sentinel.style.background  = 'transparent';
+
+    function isElementInView(element) {
+      const rect = element.getBoundingClientRect();
+      return (
+        rect.top >= 0 && rect.bottom <= window.innerHeight
+      );
+    }
+
+    messagesDiv.addEventListener('scroll', function() {
+      if (isElementInView(sentinel)) {
+        populateMessages(visiblemessages);
       }
     });
 
@@ -2286,13 +2365,21 @@ var RTCConfiguration = {
         if(Crypto.SHA256(message[0]) in hashes) {
             return
         }
-        hashes[Crypto.SHA256(message[0])] = 1;
-        if(AESkey[myroom5] != "optional") {
-            var decrypted = CryptoJS.AES.decrypt(message[0], AESkey[myroom5]).toString(CryptoJS.enc.Utf8);
-            var newmessage = cryptico.decrypt(decrypted, RSAKeys)
+        if(!(myroom5 in room)) {
+          console.log("Room " + myroom5 + " not joined, message missed: " + message[0]);
+          return;
         }
-        else {
-            var newmessage = cryptico.decrypt(message[0], RSAKeys)
+        hashes[Crypto.SHA256(message[0])] = 1;
+        try {
+          if(AESkey[myroom5] != "optional") {
+              var decrypted = CryptoJS.AES.decrypt(message[0], AESkey[myroom5]).toString(CryptoJS.enc.Utf8);
+              var newmessage = cryptico.decrypt(decrypted, RSAKeys)
+          }
+          else {
+              var newmessage = cryptico.decrypt(message[0], RSAKeys)
+          }
+        } catch {
+          console.log("Failed to decrypt message: " + message[0]);
         }
         if(newmessage.plaintext.length < 85) {
             return //Message seems a bit small lets just not let counter-party know if we can decrypt it avoid any cryptoanalysis
